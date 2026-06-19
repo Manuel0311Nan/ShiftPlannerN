@@ -1,65 +1,96 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
+
+const FEATURES = [
+  {
+    title: "Turnos generados automáticamente",
+    description:
+      "Define disponibilidad, restricciones legales y coberturas mínimas; el motor genera el horario óptimo en segundos.",
+    accent: "bg-accent-teal",
+  },
+  {
+    title: "Managers y empleados, organizados",
+    description:
+      "Cada empresa puede tener varios managers, cada uno con su propio equipo de empleados a cargo.",
+    accent: "bg-accent-orange",
+  },
+  {
+    title: "Prueba gratis 30 días",
+    description:
+      "Crea tu empresa y empieza a planificar turnos hoy mismo, sin tarjeta de crédito.",
+    accent: "bg-accent-purple",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex flex-col">
+      <header className="bg-canvas px-6 py-4 md:px-12">
+        <nav className="mx-auto flex max-w-295 items-center justify-between text-[15px]">
+          <span className="text-[20px] font-semibold tracking-[-0.125px] text-ink">
+            ScheduleAI
+          </span>
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="text-ink hover:text-primary">
+              Iniciar sesión
+            </Link>
+            <Link href="/register">
+              <Button variant="utility">Prueba gratis</Button>
+            </Link>
+          </div>
+        </nav>
+      </header>
+
+      <section className="bg-secondary px-6 py-24 text-center md:px-12">
+        <div className="mx-auto flex max-w-[760px] flex-col items-center gap-6">
+          <span className="rounded-full bg-surface px-2 py-1 text-[12px] font-semibold tracking-[0.125px] text-primary">
+            Prueba gratuita de 30 días
+          </span>
+          <h1 className="text-[40px] font-bold leading-[1.1] tracking-[-1px] text-white md:text-[64px] md:leading-[1.0] md:tracking-[-2.125px]">
+            Tus horarios de trabajo al momento
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="max-w-140 text-[16px] leading-normal text-white/80">
+            ScheduleAI genera los turnos de tu empresa automáticamente,
+            respetando disponibilidad, restricciones legales y la jerarquía de
+            managers y empleados.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link href="/register">
+              <Button variant="primary">Empezar gratis</Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="secondary">Iniciar sesión</Button>
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      <section className="bg-canvas-soft px-6 py-20 md:px-12">
+        <div className="mx-auto max-w-[1180px]">
+          <h2 className="text-center text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink md:text-[40px] md:leading-[1.1] md:tracking-[-1px]">
+            Todo lo que necesitas para planificar turnos
+          </h2>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {FEATURES.map((feature) => (
+              <Card key={feature.title}>
+                <div className={`mb-4 h-2 w-10 rounded-full ${feature.accent}`} />
+                <h3 className="text-[20px] font-semibold leading-[1.4] tracking-[-0.125px] text-ink">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 text-[15px] leading-[1.33] text-ink-muted">
+                  {feature.description}
+                </p>
+              </Card>
+            ))}
+          </div>
         </div>
-      </main>
+      </section>
+
+      <footer className="bg-canvas-soft px-6 py-8 text-center text-[14px] text-ink-secondary md:px-12">
+        © {new Date().getFullYear()} ScheduleAI. Todos los derechos
+        reservados.
+      </footer>
     </div>
   );
 }
