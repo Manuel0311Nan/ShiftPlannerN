@@ -1,15 +1,18 @@
 "use server";
 
+import { signIn } from "@/auth";
 import {
   RegisterOrganizationCommand,
   registerOrganizationInputSchema,
 } from "@/domains/identity/application/register-organization.command";
 import { PrismaRegisterOrganizationRepository } from "@/domains/identity/infrastructure/register-organization.repository";
-import { DomainError, fail, type Result } from "@/shared/kernel/result";
+
+export type RegisterFormState = { error?: string };
 
 export async function registerOrganizationAction(
+  _prevState: RegisterFormState,
   formData: FormData,
-): Promise<Result<{ empresaId: string; usuarioId: string }>> {
+): Promise<RegisterFormState> {
   const parsed = registerOrganizationInputSchema.safeParse({
     empresaNombre: formData.get("empresaNombre"),
     adminNombre: formData.get("adminNombre"),
@@ -18,13 +21,21 @@ export async function registerOrganizationAction(
   });
 
   if (!parsed.success) {
-    return fail(
-      new DomainError("Datos de registro inválidos", "REGISTRO_INPUT_INVALIDO"),
-    );
+    return { error: "Revisa los datos del formulario" };
   }
 
   const command = new RegisterOrganizationCommand(
     new PrismaRegisterOrganizationRepository(),
   );
-  return command.execute(parsed.data);
+  const result = await command.execute(parsed.data);
+  if (!result.success) {
+    return { error: result.error.message };
+  }
+
+  await signIn("credentials", {
+    email: parsed.data.adminEmail,
+    password: parsed.data.adminPassword,
+    redirectTo: "/dashboard",
+  });
+  return {};
 }
