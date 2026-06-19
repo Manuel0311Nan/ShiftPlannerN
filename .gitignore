@@ -50,4 +50,5 @@ next-env.d.ts
 # config files
 /CLAUDE.md
 /DESIGN.md
+/CHANGELOG.md
 .vercel

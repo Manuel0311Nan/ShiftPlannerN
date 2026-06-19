@@ -13,38 +13,66 @@ enum Rol {
   EMPLOYEE
 }
 
+enum InvitacionRol {
+  MANAGER
+  EMPLOYEE
+}
+
 model Empresa {
-  id            String    @id @default(cuid())
+  id            String       @id @default(cuid())
   nombre        String
-  configuracion Json      @default("{}")
+  configuracion Json         @default("{}")
   trialEndsAt   DateTime
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   usuarios      Usuario[]
   turnos        Turno[]
+  invitaciones  Invitacion[]
 }
 
 model Usuario {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  nombre        String
-  passwordHash  String
-  emailVerified DateTime?
-  image         String?
-  rol           Rol       @default(EMPLOYEE)
-  empresaId     String
-  empresa       Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  managerId     String?
-  manager       Usuario?  @relation("ManagerEmpleados", fields: [managerId], references: [id], onDelete: SetNull)
-  empleados     Usuario[] @relation("ManagerEmpleados")
-  metadata      Json      @default("{}")
-  accounts      Account[]
-  sessions      Session[]
-  turnos        Turno[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                       String       @id @default(cuid())
+  email                    String       @unique
+  nombre                   String
+  passwordHash             String
+  emailVerified            DateTime?
+  image                    String?
+  rol                      Rol          @default(EMPLOYEE)
+  empresaId                String
+  empresa                  Empresa      @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  managerId                String?
+  manager                  Usuario?     @relation("ManagerEmpleados", fields: [managerId], references: [id], onDelete: SetNull)
+  empleados                Usuario[]    @relation("ManagerEmpleados")
+  metadata                 Json         @default("{}")
+  accounts                 Account[]
+  sessions                 Session[]
+  turnos                   Turno[]
+  invitacionesComoManager  Invitacion[] @relation("InvitacionesManager")
+  invitacionesEnviadas     Invitacion[] @relation("InvitacionesEnviadas")
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
 
   @@index([empresaId])
+  @@index([managerId])
+}
+
+model Invitacion {
+  id            String        @id @default(cuid())
+  email         String
+  rol           InvitacionRol
+  empresaId     String
+  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  managerId     String?
+  manager       Usuario?      @relation("InvitacionesManager", fields: [managerId], references: [id], onDelete: SetNull)
+  invitadoPorId String
+  invitadoPor   Usuario       @relation("InvitacionesEnviadas", fields: [invitadoPorId], references: [id], onDelete: Cascade)
+  token         String        @unique
+  expiresAt     DateTime
+  aceptadaEn    DateTime?
+  createdAt     DateTime      @default(now())
+
+  @@index([empresaId])
+  @@index([email, empresaId])
   @@index([managerId])
 }
 

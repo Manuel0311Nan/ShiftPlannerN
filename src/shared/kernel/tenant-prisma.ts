@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-const TENANT_SCOPED_MODELS = new Set(["Usuario", "Turno"]);
+const TENANT_SCOPED_MODELS = new Set(["Usuario", "Turno", "Invitacion"]);
 
 const READ_OPERATIONS = new Set([
   "findUnique",
