@@ -1,8 +1,7 @@
+import { EMAIL_REGEX } from "@/shared/kernel/email";
 import { DomainError, fail, ok, type Result } from "@/shared/kernel/result";
 
 export type Rol = "ADMIN" | "MANAGER" | "EMPLOYEE";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export class Usuario {
   private constructor(
