@@ -30,6 +30,13 @@ export class PrismaInviteUserRepository
     return manager !== null;
   }
 
+  async localesDeManager(managerId: string): Promise<{ id: string }[]> {
+    return this.db.local.findMany({
+      where: { managerId },
+      select: { id: true },
+    });
+  }
+
   async crear(input: {
     email: string;
     rol: "MANAGER" | "EMPLOYEE";
@@ -37,6 +44,7 @@ export class PrismaInviteUserRepository
     invitadoPorId: string;
     token: string;
     expiresAt: Date;
+    datosAdicionales: unknown;
   }): Promise<{ invitacionId: string }> {
     const invitacion = await this.db.invitacion.create({
       data: {
@@ -46,6 +54,7 @@ export class PrismaInviteUserRepository
         invitadoPorId: input.invitadoPorId,
         token: input.token,
         expiresAt: input.expiresAt,
+        datosAdicionales: input.datosAdicionales as object,
         empresaId: this.empresaId,
       },
       select: { id: true },

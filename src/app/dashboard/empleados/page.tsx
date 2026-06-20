@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/shared/ui/card";
@@ -31,6 +33,14 @@ export default async function EmpleadosPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-1.5 text-[15px] text-ink-muted hover:text-ink"
+      >
+        <ArrowLeft size={16} />
+        Volver
+      </Link>
+
       <div>
         <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
           Trabajadores

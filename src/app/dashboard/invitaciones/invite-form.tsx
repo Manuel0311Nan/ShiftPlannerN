@@ -4,8 +4,10 @@ import { useActionState, useState } from "react";
 import { inviteUserAction } from "@/app/actions/invite-user.action";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { PlantillaEditor } from "./plantilla-editor";
+import { DisponibilidadEditor } from "./disponibilidad-editor";
 
-type Manager = { id: string; nombre: string };
+type Manager = { id: string; nombre: string; locales: { id: string; nombre: string }[] };
 
 export function InviteForm({
   viewerRol,
@@ -20,6 +22,11 @@ export function InviteForm({
 }) {
   const [state, formAction, pending] = useActionState(inviteUserAction, {});
   const [rol, setRol] = useState<"MANAGER" | "EMPLOYEE">(initialRol);
+  const [managerId, setManagerId] = useState(initialManagerId);
+
+  const managerSeleccionado =
+    viewerRol === "MANAGER" ? managers[0] : managers.find((m) => m.id === managerId);
+  const locales = managerSeleccionado?.locales ?? [];
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -59,7 +66,8 @@ export function InviteForm({
             id="managerId"
             name="managerId"
             required
-            defaultValue={initialManagerId}
+            value={managerId}
+            onChange={(e) => setManagerId(e.target.value)}
             className="w-full rounded-xs border border-[#dddddd] bg-surface px-3 py-2.5 text-[15px] text-ink focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="" disabled>
@@ -73,6 +81,41 @@ export function InviteForm({
           </select>
         </div>
       )}
+
+      {rol === "EMPLOYEE" && locales.length > 1 && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="localId" className="text-[14px] text-ink-secondary">
+            Local
+          </label>
+          <select
+            id="localId"
+            name="localId"
+            required
+            className="w-full rounded-xs border border-[#dddddd] bg-surface px-3 py-2.5 text-[15px] text-ink focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="" disabled>
+              Selecciona un local
+            </option>
+            {locales.map((local) => (
+              <option key={local.id} value={local.id}>
+                {local.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {rol === "MANAGER" && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="localNombre" className="text-[14px] text-ink-secondary">
+            Nombre del local
+          </label>
+          <Input id="localNombre" name="localNombre" required minLength={2} />
+        </div>
+      )}
+
+      {rol === "MANAGER" && <PlantillaEditor />}
+      {rol === "EMPLOYEE" && <DisponibilidadEditor />}
 
       {state.error && <p className="text-[14px] text-red-600">{state.error}</p>}
       {state.success && (

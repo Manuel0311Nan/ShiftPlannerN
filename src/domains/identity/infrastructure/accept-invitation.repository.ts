@@ -1,9 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { DomainError } from "@/shared/kernel/result";
+import {
+  managerDatosAdicionalesSchema,
+  employeeDatosAdicionalesSchema,
+} from "@/domains/identity/application/invitacion-datos-adicionales.schema";
 import type {
   AcceptInvitationRepository,
   InvitacionPorToken,
 } from "@/domains/identity/application/ports/accept-invitation-repository.port";
+import type { DiaSemana } from "@/generated/prisma/enums";
 
 export class PrismaAcceptInvitationRepository
   implements AcceptInvitationRepository
@@ -51,6 +56,50 @@ export class PrismaAcceptInvitationRepository
         },
         select: { id: true, empresaId: true },
       });
+
+      if (invitacion.rol === "MANAGER") {
+        const datos = managerDatosAdicionalesSchema.parse(
+          invitacion.datosAdicionales,
+        );
+        const local = await tx.local.create({
+          data: {
+            nombre: datos.localNombre,
+            empresaId: invitacion.empresaId,
+            managerId: usuario.id,
+          },
+          select: { id: true },
+        });
+        await tx.plantillaTurno.createMany({
+          data: datos.plantilla.map((bloque) => ({
+            empresaId: invitacion.empresaId,
+            localId: local.id,
+            diaSemana: bloque.diaSemana as DiaSemana,
+            nombre: bloque.nombre,
+            horaInicio: bloque.horaInicio,
+            horaFin: bloque.horaFin,
+            personasRequeridas: bloque.personasRequeridas,
+          })),
+        });
+      } else {
+        const datos = employeeDatosAdicionalesSchema.parse(
+          invitacion.datosAdicionales,
+        );
+        if (datos.localId) {
+          await tx.usuario.update({
+            where: { id: usuario.id },
+            data: { localId: datos.localId },
+          });
+        }
+        await tx.disponibilidad.createMany({
+          data: datos.disponibilidad.map((bloque) => ({
+            empresaId: invitacion.empresaId,
+            usuarioId: usuario.id,
+            diaSemana: bloque.diaSemana as DiaSemana,
+            horaInicio: bloque.horaInicio,
+            horaFin: bloque.horaFin,
+          })),
+        });
+      }
 
       await tx.invitacion.update({
         where: { id: invitacion.id },

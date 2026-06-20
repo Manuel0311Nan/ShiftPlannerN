@@ -4,6 +4,7 @@ export interface InviteUserRepository {
   emailEnUso(email: string): Promise<boolean>;
   invitacionPendienteExiste(email: string): Promise<boolean>;
   managerPerteneceATenant(managerId: string): Promise<boolean>;
+  localesDeManager(managerId: string): Promise<{ id: string }[]>;
   crear(input: {
     email: string;
     rol: InvitacionRol;
@@ -11,6 +12,7 @@ export interface InviteUserRepository {
     invitadoPorId: string;
     token: string;
     expiresAt: Date;
+    datosAdicionales: unknown;
   }): Promise<{ invitacionId: string }>;
   eliminar(invitacionId: string): Promise<void>;
 }
