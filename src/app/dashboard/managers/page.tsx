@@ -14,7 +14,10 @@ export default async function ManagersPage() {
   }
 
   const managers = await prisma.usuario.findMany({
-    where: { empresaId: session!.user.empresaId, rol: "MANAGER" },
+    where: {
+      empresaId: session!.user.empresaId,
+      localesComoManager: { some: {} },
+    },
     select: {
       id: true,
       nombre: true,
@@ -43,14 +46,14 @@ export default async function ManagersPage() {
             Managers de tu empresa y los equipos que tienen a cargo.
           </p>
         </div>
-        <Link href="/dashboard/invitaciones?rol=MANAGER">
-          <Button variant="primary">Invitar manager</Button>
+        <Link href="/dashboard/equipo?rol=MANAGER">
+          <Button variant="primary">Crear manager</Button>
         </Link>
       </div>
 
       {managers.length === 0 ? (
         <Card className="bg-canvas-soft text-center text-[15px] text-ink-muted">
-          Todavía no has invitado a ningún manager.
+          Todavía no has creado ningún manager.
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

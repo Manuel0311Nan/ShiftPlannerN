@@ -18,7 +18,11 @@ export default async function ManagerDetailPage({
 
   const { id } = await params;
   const manager = await prisma.usuario.findFirst({
-    where: { id, empresaId: session!.user.empresaId, rol: "MANAGER" },
+    where: {
+      id,
+      empresaId: session!.user.empresaId,
+      localesComoManager: { some: {} },
+    },
     select: { id: true, nombre: true, email: true },
   });
   if (!manager) {
@@ -49,9 +53,9 @@ export default async function ManagerDetailPage({
           <p className="mt-1 text-[15px] text-ink-muted">{manager.email}</p>
         </div>
         <Link
-          href={`/dashboard/invitaciones?rol=EMPLOYEE&managerId=${manager.id}`}
+          href={`/dashboard/equipo?rol=EMPLOYEE&managerId=${manager.id}`}
         >
-          <Button variant="primary">Invitar trabajador</Button>
+          <Button variant="primary">Crear trabajador</Button>
         </Link>
       </div>
 

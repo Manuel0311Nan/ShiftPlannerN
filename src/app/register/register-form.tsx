@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
 import { registerOrganizationAction } from "@/app/actions/register-organization.action";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { PlantillaEditor } from "@/domains/shifts/ui/plantilla-editor";
 
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState(
     registerOrganizationAction,
     {},
   );
+  const [esManager, setEsManager] = useState(false);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -46,6 +49,26 @@ export function RegisterForm() {
           minLength={8}
         />
       </div>
+
+      <label className="flex items-center gap-2 text-[14px] text-ink-secondary">
+        <input
+          type="checkbox"
+          name="esManager"
+          checked={esManager}
+          onChange={(e) => setEsManager(e.target.checked)}
+        />
+        ¿Vas a gestionar tú mismo un local?
+      </label>
+
+      {esManager && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="localNombre" className="text-[14px] text-ink-secondary">
+            Nombre del local
+          </label>
+          <Input id="localNombre" name="localNombre" required minLength={2} />
+        </div>
+      )}
+      {esManager && <PlantillaEditor />}
 
       {state.error && (
         <p className="text-[14px] text-red-600">{state.error}</p>

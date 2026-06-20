@@ -7,8 +7,8 @@ const envSchema = z.object({
   // nativo para VERCEL_URL). Solo hace falta fijarla si se quiere forzar
   // una URL distinta a la detectada.
   AUTH_URL: z.string().url().optional(),
-  // Opcional: si falta, las invitaciones por email fallan con un error
-  // controlado en vez de romper el resto de la app al importar env.ts.
+  // Opcional: si falta, el envío de credenciales por email falla con un
+  // error controlado en vez de romper el resto de la app al importar env.ts.
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().email().default("onboarding@resend.dev"),
   APP_URL: z.string().url().optional(),

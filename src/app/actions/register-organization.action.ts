@@ -13,11 +13,16 @@ export async function registerOrganizationAction(
   _prevState: RegisterFormState,
   formData: FormData,
 ): Promise<RegisterFormState> {
+  const plantillaRaw = formData.get("plantilla");
+
   const parsed = registerOrganizationInputSchema.safeParse({
     empresaNombre: formData.get("empresaNombre"),
     adminNombre: formData.get("adminNombre"),
     adminEmail: formData.get("adminEmail"),
     adminPassword: formData.get("adminPassword"),
+    esManager: formData.get("esManager") === "on",
+    localNombre: formData.get("localNombre") || undefined,
+    plantilla: plantillaRaw ? JSON.parse(String(plantillaRaw)) : undefined,
   });
 
   if (!parsed.success) {

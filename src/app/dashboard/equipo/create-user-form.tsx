@@ -1,15 +1,15 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { inviteUserAction } from "@/app/actions/invite-user.action";
+import { createUserAction } from "@/app/actions/create-user.action";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { PlantillaEditor } from "./plantilla-editor";
-import { DisponibilidadEditor } from "./disponibilidad-editor";
+import { PlantillaEditor } from "@/domains/shifts/ui/plantilla-editor";
+import { DisponibilidadEditor } from "@/domains/employees/ui/disponibilidad-editor";
 
 type Manager = { id: string; nombre: string; locales: { id: string; nombre: string }[] };
 
-export function InviteForm({
+export function CreateUserForm({
   viewerRol,
   managers,
   initialRol,
@@ -20,7 +20,7 @@ export function InviteForm({
   initialRol: "MANAGER" | "EMPLOYEE";
   initialManagerId: string;
 }) {
-  const [state, formAction, pending] = useActionState(inviteUserAction, {});
+  const [state, formAction, pending] = useActionState(createUserAction, {});
   const [rol, setRol] = useState<"MANAGER" | "EMPLOYEE">(initialRol);
   const [managerId, setManagerId] = useState(initialManagerId);
 
@@ -30,6 +30,13 @@ export function InviteForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="nombre" className="text-[14px] text-ink-secondary">
+          Nombre
+        </label>
+        <Input id="nombre" name="nombre" required minLength={2} />
+      </div>
+
       <div className="flex flex-col gap-1.5">
         <label htmlFor="email" className="text-[14px] text-ink-secondary">
           Email
@@ -119,11 +126,13 @@ export function InviteForm({
 
       {state.error && <p className="text-[14px] text-red-600">{state.error}</p>}
       {state.success && (
-        <p className="text-[14px] text-accent-green">Invitación enviada.</p>
+        <p className="text-[14px] text-accent-green">
+          Cuenta creada. Le enviamos las credenciales por email.
+        </p>
       )}
 
       <Button type="submit" variant="primary" disabled={pending}>
-        {pending ? "Enviando…" : "Enviar invitación"}
+        {pending ? "Creando…" : "Crear cuenta"}
       </Button>
     </form>
   );

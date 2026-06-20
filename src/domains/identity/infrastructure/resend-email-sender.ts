@@ -1,34 +1,36 @@
 import { Resend } from "resend";
 import { env, getAppUrl } from "@/lib/env";
 import type { EmailSender } from "@/domains/identity/application/ports/email-sender.port";
-import type { InvitacionRol } from "@/domains/identity/domain/invitacion.entity";
+import type { NuevoUsuarioRol } from "@/domains/identity/domain/alta-usuario.entity";
 
-const ROL_LABEL: Record<InvitacionRol, string> = {
+const ROL_LABEL: Record<NuevoUsuarioRol, string> = {
   MANAGER: "Manager",
   EMPLOYEE: "Trabajador",
 };
 
 export class ResendEmailSender implements EmailSender {
-  async enviarInvitacion(input: {
+  async enviarCredenciales(input: {
     to: string;
+    nombre: string;
     empresaNombre: string;
-    rol: InvitacionRol;
-    token: string;
+    rol: NuevoUsuarioRol;
+    password: string;
   }): Promise<void> {
     if (!env.RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY no está configurada");
     }
 
     const client = new Resend(env.RESEND_API_KEY);
-    const url = `${getAppUrl()}/invitacion/${input.token}`;
+    const url = `${getAppUrl()}/login`;
 
     const { error } = await client.emails.send({
       from: env.EMAIL_FROM,
       to: input.to,
-      subject: `Te invitaron a unirte a ${input.empresaNombre}`,
-      html: `<p>Te invitaron a unirte a <strong>${input.empresaNombre}</strong> como ${ROL_LABEL[input.rol]}.</p>
-<p><a href="${url}">Aceptar invitación</a></p>
-<p>Este enlace expira en 7 días.</p>`,
+      subject: `Tu cuenta en ${input.empresaNombre} ya está activa`,
+      html: `<p>Hola ${input.nombre}, te dieron acceso a <strong>${input.empresaNombre}</strong> como ${ROL_LABEL[input.rol]}.</p>
+<p>Email: ${input.to}<br>Contraseña temporal: <strong>${input.password}</strong></p>
+<p><a href="${url}">Iniciar sesión</a></p>
+<p>Te recomendamos cambiar la contraseña después de tu primer ingreso.</p>`,
     });
 
     if (error) {

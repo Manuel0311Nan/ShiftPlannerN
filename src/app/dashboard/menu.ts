@@ -1,7 +1,7 @@
 import {
   Calendar,
   CreditCard,
-  MailPlus,
+  UserPlus,
   UserCog,
   Users,
   type LucideIcon,
@@ -39,10 +39,10 @@ export const DASHBOARD_MENU: DashboardMenuItem[] = [
     roles: ["ADMIN", "MANAGER", "EMPLOYEE"],
   },
   {
-    href: "/dashboard/invitaciones",
-    label: "Invitaciones",
-    description: "Invita nuevos managers o empleados a tu empresa.",
-    icon: MailPlus,
+    href: "/dashboard/equipo",
+    label: "Equipo",
+    description: "Crea cuentas para managers o empleados de tu empresa.",
+    icon: UserPlus,
     roles: ["ADMIN", "MANAGER"],
   },
   {

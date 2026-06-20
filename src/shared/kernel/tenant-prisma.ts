@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 const TENANT_SCOPED_MODELS = new Set([
   "Usuario",
   "Turno",
-  "Invitacion",
   "Local",
   "PlantillaTurno",
   "Disponibilidad",
