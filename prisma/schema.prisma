@@ -18,62 +18,128 @@ enum InvitacionRol {
   EMPLOYEE
 }
 
+enum DiaSemana {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+  DOMINGO
+}
+
 model Empresa {
-  id            String       @id @default(cuid())
-  nombre        String
-  configuracion Json         @default("{}")
-  trialEndsAt   DateTime
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  usuarios      Usuario[]
-  turnos        Turno[]
-  invitaciones  Invitacion[]
+  id              String           @id @default(cuid())
+  nombre          String
+  configuracion   Json             @default("{}")
+  trialEndsAt     DateTime
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  usuarios        Usuario[]
+  turnos          Turno[]
+  invitaciones    Invitacion[]
+  locales         Local[]
+  plantillasTurno PlantillaTurno[]
+  disponibilidades Disponibilidad[]
 }
 
 model Usuario {
-  id                       String       @id @default(cuid())
-  email                    String       @unique
+  id                       String           @id @default(cuid())
+  email                    String           @unique
   nombre                   String
   passwordHash             String
   emailVerified            DateTime?
   image                    String?
-  rol                      Rol          @default(EMPLOYEE)
+  rol                      Rol              @default(EMPLOYEE)
   empresaId                String
-  empresa                  Empresa      @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresa                  Empresa          @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   managerId                String?
-  manager                  Usuario?     @relation("ManagerEmpleados", fields: [managerId], references: [id], onDelete: SetNull)
-  empleados                Usuario[]    @relation("ManagerEmpleados")
-  metadata                 Json         @default("{}")
+  manager                  Usuario?         @relation("ManagerEmpleados", fields: [managerId], references: [id], onDelete: SetNull)
+  empleados                Usuario[]        @relation("ManagerEmpleados")
+  localId                  String?
+  local                    Local?           @relation("EmpleadosLocal", fields: [localId], references: [id], onDelete: SetNull)
+  localesComoManager       Local[]          @relation("LocalesManager")
+  disponibilidad           Disponibilidad[]
+  metadata                 Json             @default("{}")
   accounts                 Account[]
   sessions                 Session[]
   turnos                   Turno[]
-  invitacionesComoManager  Invitacion[] @relation("InvitacionesManager")
-  invitacionesEnviadas     Invitacion[] @relation("InvitacionesEnviadas")
-  createdAt                DateTime     @default(now())
-  updatedAt                DateTime     @updatedAt
+  invitacionesComoManager  Invitacion[]     @relation("InvitacionesManager")
+  invitacionesEnviadas     Invitacion[]     @relation("InvitacionesEnviadas")
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+
+  @@index([empresaId])
+  @@index([managerId])
+  @@index([localId])
+}
+
+model Invitacion {
+  id               String        @id @default(cuid())
+  email            String
+  rol              InvitacionRol
+  empresaId        String
+  empresa          Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  managerId        String?
+  manager          Usuario?      @relation("InvitacionesManager", fields: [managerId], references: [id], onDelete: SetNull)
+  invitadoPorId    String
+  invitadoPor      Usuario       @relation("InvitacionesEnviadas", fields: [invitadoPorId], references: [id], onDelete: Cascade)
+  token            String        @unique
+  expiresAt        DateTime
+  aceptadaEn       DateTime?
+  datosAdicionales Json?
+  createdAt        DateTime      @default(now())
+
+  @@index([empresaId])
+  @@index([email, empresaId])
+  @@index([managerId])
+}
+
+model Local {
+  id        String           @id @default(cuid())
+  nombre    String
+  empresaId String
+  empresa   Empresa          @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  managerId String
+  manager   Usuario          @relation("LocalesManager", fields: [managerId], references: [id], onDelete: Cascade)
+  plantilla PlantillaTurno[]
+  empleados Usuario[]        @relation("EmpleadosLocal")
+  createdAt DateTime         @default(now())
 
   @@index([empresaId])
   @@index([managerId])
 }
 
-model Invitacion {
-  id            String        @id @default(cuid())
-  email         String
-  rol           InvitacionRol
-  empresaId     String
-  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  managerId     String?
-  manager       Usuario?      @relation("InvitacionesManager", fields: [managerId], references: [id], onDelete: SetNull)
-  invitadoPorId String
-  invitadoPor   Usuario       @relation("InvitacionesEnviadas", fields: [invitadoPorId], references: [id], onDelete: Cascade)
-  token         String        @unique
-  expiresAt     DateTime
-  aceptadaEn    DateTime?
-  createdAt     DateTime      @default(now())
+model PlantillaTurno {
+  id                 String    @id @default(cuid())
+  empresaId          String
+  empresa            Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  localId            String
+  local              Local     @relation(fields: [localId], references: [id], onDelete: Cascade)
+  diaSemana          DiaSemana
+  nombre             String
+  horaInicio         String
+  horaFin            String
+  personasRequeridas Int
+  createdAt          DateTime  @default(now())
 
   @@index([empresaId])
-  @@index([email, empresaId])
-  @@index([managerId])
+  @@index([localId])
+}
+
+model Disponibilidad {
+  id         String    @id @default(cuid())
+  empresaId  String
+  empresa    Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuarioId  String
+  usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  diaSemana  DiaSemana
+  horaInicio String
+  horaFin    String
+  createdAt  DateTime  @default(now())
+
+  @@index([empresaId])
+  @@index([usuarioId])
 }
 
 model Account {

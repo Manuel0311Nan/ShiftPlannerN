@@ -14,14 +14,31 @@ export default async function InvitacionesPage({
   const viewerRol = session!.user.rol === "ADMIN" ? "ADMIN" : "MANAGER";
   const params = await searchParams;
 
-  const managers =
+  const managersRaw =
     viewerRol === "ADMIN"
       ? await prisma.usuario.findMany({
           where: { empresaId, rol: "MANAGER" },
-          select: { id: true, nombre: true },
+          select: {
+            id: true,
+            nombre: true,
+            localesComoManager: { select: { id: true, nombre: true } },
+          },
           orderBy: { nombre: "asc" },
         })
-      : [];
+      : await prisma.usuario.findMany({
+          where: { id: session!.user.id },
+          select: {
+            id: true,
+            nombre: true,
+            localesComoManager: { select: { id: true, nombre: true } },
+          },
+        });
+
+  const managers = managersRaw.map((manager) => ({
+    id: manager.id,
+    nombre: manager.nombre,
+    locales: manager.localesComoManager,
+  }));
 
   const invitations = await prisma.invitacion.findMany({
     where: {

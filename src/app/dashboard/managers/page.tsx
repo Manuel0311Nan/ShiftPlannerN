@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/shared/ui/badge";
@@ -25,6 +26,14 @@ export default async function ManagersPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-1.5 text-[15px] text-ink-muted hover:text-ink"
+      >
+        <ArrowLeft size={16} />
+        Volver
+      </Link>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
