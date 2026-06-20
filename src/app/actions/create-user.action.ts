@@ -4,18 +4,18 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  InviteUserCommand,
-  inviteUserInputSchema,
-} from "@/domains/identity/application/invite-user.command";
-import { PrismaInviteUserRepository } from "@/domains/identity/infrastructure/invite-user.repository";
+  CreateUserCommand,
+  createUserInputSchema,
+} from "@/domains/identity/application/create-user.command";
+import { PrismaCreateUserRepository } from "@/domains/identity/infrastructure/create-user.repository";
 import { ResendEmailSender } from "@/domains/identity/infrastructure/resend-email-sender";
 
-export type InviteUserFormState = { error?: string; success?: boolean };
+export type CreateUserFormState = { error?: string; success?: boolean };
 
-export async function inviteUserAction(
-  _prevState: InviteUserFormState,
+export async function createUserAction(
+  _prevState: CreateUserFormState,
   formData: FormData,
-): Promise<InviteUserFormState> {
+): Promise<CreateUserFormState> {
   const session = await auth();
   if (!session) {
     return { error: "Tu sesión ha caducado, vuelve a iniciar sesión" };
@@ -24,8 +24,9 @@ export async function inviteUserAction(
   const plantillaRaw = formData.get("plantilla");
   const disponibilidadRaw = formData.get("disponibilidad");
 
-  const parsed = inviteUserInputSchema.safeParse({
+  const parsed = createUserInputSchema.safeParse({
     email: formData.get("email"),
+    nombre: formData.get("nombre"),
     rol: formData.get("rol"),
     managerId: formData.get("managerId") || undefined,
     localNombre: formData.get("localNombre") || undefined,
@@ -44,21 +45,23 @@ export async function inviteUserAction(
     select: { nombre: true },
   });
 
-  const command = new InviteUserCommand(
-    new PrismaInviteUserRepository(session.user.empresaId),
+  const command = new CreateUserCommand(
+    new PrismaCreateUserRepository(session.user.empresaId),
     new ResendEmailSender(),
   );
 
   const result = await command.execute(parsed.data, {
     empresaNombre: empresa.nombre,
-    invitadoPorId: session.user.id,
-    invitadoPorRol: session.user.rol,
+    creadoPorId: session.user.id,
+    creadoPorRol: session.user.rol,
   });
 
   if (!result.success) {
     return { error: result.error.message };
   }
 
-  revalidatePath("/dashboard/invitaciones");
+  revalidatePath("/dashboard/equipo");
+  revalidatePath("/dashboard/managers");
+  revalidatePath("/dashboard/empleados");
   return { success: true };
 }

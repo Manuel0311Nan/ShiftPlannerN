@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto";
 import { EMAIL_REGEX } from "@/shared/kernel/email";
 import { DomainError, fail, ok, type Result } from "@/shared/kernel/result";
 import type { Rol } from "@/domains/identity/domain/usuario.entity";
@@ -11,9 +10,7 @@ import {
   type BloqueDisponibilidad,
 } from "@/domains/employees/domain/bloque-disponibilidad";
 
-export type InvitacionRol = "MANAGER" | "EMPLOYEE";
-
-const INVITATION_EXPIRY_DAYS = 7;
+export type NuevoUsuarioRol = "MANAGER" | "EMPLOYEE";
 
 export type BloquePlantillaInput = {
   diaSemana: string;
@@ -29,14 +26,18 @@ export type BloqueDisponibilidadInput = {
   horaFin: string;
 };
 
-export class Invitacion {
+/**
+ * Valida quién puede crear a quién (y con qué datos) al dar de alta una
+ * cuenta directamente desde el panel — reemplaza la antigua `Invitacion`,
+ * ahora sin token/expiración porque la cuenta queda activa al instante.
+ */
+export class AltaUsuario {
   private constructor(
     readonly email: string,
-    readonly rol: InvitacionRol,
-    readonly invitadoPorId: string,
+    readonly nombre: string,
+    readonly rol: NuevoUsuarioRol,
+    readonly creadoPorId: string,
     readonly managerId: string | null,
-    readonly token: string,
-    readonly expiresAt: Date,
     readonly localNombre: string | null,
     readonly plantilla: BloquePlantilla[],
     readonly localId: string | null,
@@ -45,36 +46,45 @@ export class Invitacion {
 
   static create(props: {
     email: string;
-    rol: InvitacionRol;
-    invitadoPorId: string;
-    invitadoPorRol: Rol;
+    nombre: string;
+    rol: NuevoUsuarioRol;
+    creadoPorId: string;
+    creadoPorRol: Rol;
     managerId?: string | null;
     localNombre?: string;
     plantilla?: BloquePlantillaInput[];
     localId?: string | null;
     disponibilidad?: BloqueDisponibilidadInput[];
-  }): Result<Invitacion> {
+  }): Result<AltaUsuario> {
     const email = props.email.trim().toLowerCase();
     if (!EMAIL_REGEX.test(email)) {
-      return fail(
-        new DomainError("Email inválido", "INVITACION_EMAIL_INVALIDO"),
-      );
+      return fail(new DomainError("Email inválido", "ALTA_EMAIL_INVALIDO"));
     }
 
-    if (props.invitadoPorRol === "EMPLOYEE") {
+    const nombre = props.nombre.trim();
+    if (nombre.length < 2) {
       return fail(
         new DomainError(
-          "Un empleado no puede enviar invitaciones",
-          "INVITACION_ROL_NO_PERMITIDO",
+          "El nombre debe tener al menos 2 caracteres",
+          "ALTA_NOMBRE_INVALIDO",
         ),
       );
     }
 
-    if (props.rol === "MANAGER" && props.invitadoPorRol !== "ADMIN") {
+    if (props.creadoPorRol === "EMPLOYEE") {
       return fail(
         new DomainError(
-          "Solo un administrador puede invitar a un manager",
-          "INVITACION_ROL_NO_PERMITIDO",
+          "Un empleado no puede crear otras cuentas",
+          "ALTA_ROL_NO_PERMITIDO",
+        ),
+      );
+    }
+
+    if (props.rol === "MANAGER" && props.creadoPorRol !== "ADMIN") {
+      return fail(
+        new DomainError(
+          "Solo un administrador puede crear un manager",
+          "ALTA_ROL_NO_PERMITIDO",
         ),
       );
     }
@@ -86,12 +96,12 @@ export class Invitacion {
     let disponibilidad: BloqueDisponibilidad[] = [];
 
     if (props.rol === "MANAGER") {
-      const nombre = (props.localNombre ?? "").trim();
-      if (nombre.length < 2) {
+      const nombreLocal = (props.localNombre ?? "").trim();
+      if (nombreLocal.length < 2) {
         return fail(
           new DomainError(
             "El nombre del local debe tener al menos 2 caracteres",
-            "INVITACION_LOCAL_INVALIDO",
+            "ALTA_LOCAL_INVALIDO",
           ),
         );
       }
@@ -99,7 +109,7 @@ export class Invitacion {
         return fail(
           new DomainError(
             "El local necesita al menos un bloque de turno",
-            "INVITACION_PLANTILLA_VACIA",
+            "ALTA_PLANTILLA_VACIA",
           ),
         );
       }
@@ -109,18 +119,18 @@ export class Invitacion {
         if (!result.success) return result;
         bloques.push(result.value);
       }
-      localNombre = nombre;
+      localNombre = nombreLocal;
       plantilla = bloques;
     }
 
     if (props.rol === "EMPLOYEE") {
-      if (props.invitadoPorRol === "MANAGER") {
-        managerId = props.invitadoPorId;
+      if (props.creadoPorRol === "MANAGER") {
+        managerId = props.creadoPorId;
       } else if (!props.managerId) {
         return fail(
           new DomainError(
             "Debes seleccionar un manager",
-            "INVITACION_SIN_MANAGER",
+            "ALTA_SIN_MANAGER",
           ),
         );
       } else {
@@ -131,7 +141,7 @@ export class Invitacion {
         return fail(
           new DomainError(
             "El trabajador necesita al menos un bloque de disponibilidad",
-            "INVITACION_DISPONIBILIDAD_VACIA",
+            "ALTA_DISPONIBILIDAD_VACIA",
           ),
         );
       }
@@ -145,19 +155,13 @@ export class Invitacion {
       localId = props.localId ?? null;
     }
 
-    const token = randomBytes(32).toString("base64url");
-    const expiresAt = new Date(
-      Date.now() + INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-    );
-
     return ok(
-      new Invitacion(
+      new AltaUsuario(
         email,
+        nombre,
         props.rol,
-        props.invitadoPorId,
+        props.creadoPorId,
         managerId,
-        token,
-        expiresAt,
         localNombre,
         plantilla,
         localId,

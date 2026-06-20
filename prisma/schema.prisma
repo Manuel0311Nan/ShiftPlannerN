@@ -13,11 +13,6 @@ enum Rol {
   EMPLOYEE
 }
 
-enum InvitacionRol {
-  MANAGER
-  EMPLOYEE
-}
-
 enum DiaSemana {
   LUNES
   MARTES
@@ -37,7 +32,6 @@ model Empresa {
   updatedAt       DateTime         @updatedAt
   usuarios        Usuario[]
   turnos          Turno[]
-  invitaciones    Invitacion[]
   locales         Local[]
   plantillasTurno PlantillaTurno[]
   disponibilidades Disponibilidad[]
@@ -64,35 +58,12 @@ model Usuario {
   accounts                 Account[]
   sessions                 Session[]
   turnos                   Turno[]
-  invitacionesComoManager  Invitacion[]     @relation("InvitacionesManager")
-  invitacionesEnviadas     Invitacion[]     @relation("InvitacionesEnviadas")
   createdAt                DateTime         @default(now())
   updatedAt                DateTime         @updatedAt
 
   @@index([empresaId])
   @@index([managerId])
   @@index([localId])
-}
-
-model Invitacion {
-  id               String        @id @default(cuid())
-  email            String
-  rol              InvitacionRol
-  empresaId        String
-  empresa          Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  managerId        String?
-  manager          Usuario?      @relation("InvitacionesManager", fields: [managerId], references: [id], onDelete: SetNull)
-  invitadoPorId    String
-  invitadoPor      Usuario       @relation("InvitacionesEnviadas", fields: [invitadoPorId], references: [id], onDelete: Cascade)
-  token            String        @unique
-  expiresAt        DateTime
-  aceptadaEn       DateTime?
-  datosAdicionales Json?
-  createdAt        DateTime      @default(now())
-
-  @@index([empresaId])
-  @@index([email, empresaId])
-  @@index([managerId])
 }
 
 model Local {

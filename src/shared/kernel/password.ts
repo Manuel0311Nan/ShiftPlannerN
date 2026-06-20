@@ -21,3 +21,8 @@ export async function verifyPassword(
   const derivedKey = (await scryptAsync(password, salt, KEY_LENGTH)) as Buffer;
   return derivedKey.length === keyBuffer.length && timingSafeEqual(derivedKey, keyBuffer);
 }
+
+/** Contraseña temporal para cuentas creadas directamente por un admin/manager. */
+export function generarPasswordTemporal(): string {
+  return randomBytes(9).toString("base64url");
+}
