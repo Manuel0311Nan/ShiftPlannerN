@@ -7,19 +7,19 @@ const FEATURES = [
     title: "Turnos generados automáticamente",
     description:
       "Define disponibilidad, restricciones legales y coberturas mínimas; el motor genera el horario óptimo en segundos.",
-    accent: "bg-accent-teal",
+    accent: "bg-deep-sky-blue",
   },
   {
     title: "Managers y empleados, organizados",
     description:
       "Cada empresa puede tener varios managers, cada uno con su propio equipo de empleados a cargo.",
-    accent: "bg-accent-orange",
+    accent: "bg-cool-horizon",
   },
   {
     title: "Prueba gratis 30 días",
     description:
       "Crea tu empresa y empieza a planificar turnos hoy mismo, sin tarjeta de crédito.",
-    accent: "bg-accent-purple",
+    accent: "bg-fuchsia-plum",
   },
 ];
 
