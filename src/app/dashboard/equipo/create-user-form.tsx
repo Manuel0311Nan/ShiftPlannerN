@@ -4,6 +4,14 @@ import { useActionState, useState } from "react";
 import { createUserAction } from "@/app/actions/create-user.action";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/select";
 import { PlantillaEditor } from "@/domains/shifts/ui/plantilla-editor";
 import { DisponibilidadEditor } from "@/domains/employees/ui/disponibilidad-editor";
 
@@ -31,34 +39,31 @@ export function CreateUserForm({
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="nombre" className="text-[14px] text-ink-secondary">
-          Nombre
-        </label>
+        <Label htmlFor="nombre">Nombre</Label>
         <Input id="nombre" name="nombre" required minLength={2} />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-[14px] text-ink-secondary">
-          Email
-        </label>
+        <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" required />
       </div>
 
       {viewerRol === "ADMIN" ? (
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="rol" className="text-[14px] text-ink-secondary">
-            Rol
-          </label>
-          <select
-            id="rol"
+          <Label htmlFor="rol">Rol</Label>
+          <Select
             name="rol"
             value={rol}
-            onChange={(e) => setRol(e.target.value as "MANAGER" | "EMPLOYEE")}
-            className="w-full rounded-xs border border-[#dddddd] bg-surface px-3 py-2.5 text-[15px] text-ink focus:outline-none focus:ring-2 focus:ring-ring"
+            onValueChange={(value) => setRol(value as "MANAGER" | "EMPLOYEE")}
           >
-            <option value="MANAGER">Manager</option>
-            <option value="EMPLOYEE">Trabajador</option>
-          </select>
+            <SelectTrigger id="rol">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MANAGER">Manager</SelectItem>
+              <SelectItem value="EMPLOYEE">Trabajador</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       ) : (
         <input type="hidden" name="rol" value="EMPLOYEE" />
@@ -66,57 +71,48 @@ export function CreateUserForm({
 
       {rol === "EMPLOYEE" && viewerRol === "ADMIN" && (
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="managerId" className="text-[14px] text-ink-secondary">
-            Manager
-          </label>
-          <select
-            id="managerId"
+          <Label htmlFor="managerId">Manager</Label>
+          <Select
             name="managerId"
             required
             value={managerId}
-            onChange={(e) => setManagerId(e.target.value)}
-            className="w-full rounded-xs border border-[#dddddd] bg-surface px-3 py-2.5 text-[15px] text-ink focus:outline-none focus:ring-2 focus:ring-ring"
+            onValueChange={(value) => setManagerId(value ?? "")}
           >
-            <option value="" disabled>
-              Selecciona un manager
-            </option>
-            {managers.map((manager) => (
-              <option key={manager.id} value={manager.id}>
-                {manager.nombre}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="managerId">
+              <SelectValue placeholder="Selecciona un manager" />
+            </SelectTrigger>
+            <SelectContent>
+              {managers.map((manager) => (
+                <SelectItem key={manager.id} value={manager.id}>
+                  {manager.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
       {rol === "EMPLOYEE" && locales.length > 1 && (
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="localId" className="text-[14px] text-ink-secondary">
-            Local
-          </label>
-          <select
-            id="localId"
-            name="localId"
-            required
-            className="w-full rounded-xs border border-[#dddddd] bg-surface px-3 py-2.5 text-[15px] text-ink focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="" disabled>
-              Selecciona un local
-            </option>
-            {locales.map((local) => (
-              <option key={local.id} value={local.id}>
-                {local.nombre}
-              </option>
-            ))}
-          </select>
+          <Label htmlFor="localId">Local</Label>
+          <Select name="localId" required>
+            <SelectTrigger id="localId">
+              <SelectValue placeholder="Selecciona un local" />
+            </SelectTrigger>
+            <SelectContent>
+              {locales.map((local) => (
+                <SelectItem key={local.id} value={local.id}>
+                  {local.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
       {rol === "MANAGER" && (
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="localNombre" className="text-[14px] text-ink-secondary">
-            Nombre del local
-          </label>
+          <Label htmlFor="localNombre">Nombre del local</Label>
           <Input id="localNombre" name="localNombre" required minLength={2} />
         </div>
       )}
@@ -124,14 +120,14 @@ export function CreateUserForm({
       {rol === "MANAGER" && <PlantillaEditor />}
       {rol === "EMPLOYEE" && <DisponibilidadEditor />}
 
-      {state.error && <p className="text-[14px] text-red-600">{state.error}</p>}
+      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state.success && (
-        <p className="text-[14px] text-accent-green">
+        <p className="text-sm text-accent-green">
           Cuenta creada. Le enviamos las credenciales por email.
         </p>
       )}
 
-      <Button type="submit" variant="primary" disabled={pending}>
+      <Button type="submit" variant="primary" loading={pending}>
         {pending ? "Creando…" : "Crear cuenta"}
       </Button>
     </form>
