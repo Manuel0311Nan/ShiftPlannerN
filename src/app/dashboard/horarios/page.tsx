@@ -1,17 +1,11 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { DIAS_SEMANA } from "@/shared/kernel/dia-semana";
 import { Card } from "@/shared/ui/card";
+import { HorarioSemanaBoard } from "@/domains/scheduling/ui/horario-semana-board";
+import type { TurnoVista } from "@/domains/scheduling/ui/board-utils";
 import { GenerateForm } from "./generate-form";
-
-const JS_DAY_LABELS = [
-  "Domingo",
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
-];
+import { SemanaNav } from "@/domains/scheduling/ui/semana-nav";
 
 function lunesDeEstaSemana(): Date {
   const hoy = new Date();
@@ -23,10 +17,8 @@ function lunesDeEstaSemana(): Date {
 }
 
 function formatoFecha(fecha: Date): string {
-  const año = fecha.getFullYear();
-  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
-  const dia = String(fecha.getDate()).padStart(2, "0");
-  return `${año}-${mes}-${dia}`;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${fecha.getFullYear()}-${p(fecha.getMonth() + 1)}-${p(fecha.getDate())}`;
 }
 
 // No usar `new Date("YYYY-MM-DD")`: lo interpreta como medianoche UTC, no
@@ -36,8 +28,15 @@ function parsearFechaLocal(valor: string): Date {
   return new Date(año, mes - 1, dia);
 }
 
-function formatoHora(fecha: Date): string {
-  return fecha.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+function origenDeTurno(metadata: unknown): TurnoVista["origen"] {
+  if (
+    metadata &&
+    typeof metadata === "object" &&
+    (metadata as Record<string, unknown>).origen === "manual"
+  ) {
+    return "manual";
+  }
+  return "generado";
 }
 
 export default async function HorariosPage({
@@ -54,6 +53,7 @@ export default async function HorariosPage({
     : lunesDeEstaSemana();
   const semanaFin = new Date(semanaInicio);
   semanaFin.setDate(semanaFin.getDate() + 7);
+  const semanaStr = formatoFecha(semanaInicio);
 
   if (rol === "EMPLOYEE") {
     const turnos = await prisma.turno.findMany({
@@ -61,29 +61,31 @@ export default async function HorariosPage({
       orderBy: { inicio: "asc" },
     });
 
+    const turnosVista: TurnoVista[] = turnos.map((turno) => ({
+      id: turno.id,
+      usuarioId: turno.usuarioId,
+      usuarioNombre: session!.user.name ?? "",
+      inicioIso: turno.inicio.toISOString(),
+      finIso: turno.fin.toISOString(),
+      origen: origenDeTurno(turno.metadata),
+    }));
+
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
-          Mis turnos
-        </h1>
-        {turnos.length === 0 ? (
-          <Card className="bg-canvas-soft text-center text-[15px] text-ink-muted">
-            No tienes turnos asignados esta semana.
-          </Card>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {turnos.map((turno) => (
-              <Card key={turno.id} className="flex items-center justify-between">
-                <span className="text-[15px] font-medium text-ink">
-                  {JS_DAY_LABELS[turno.inicio.getDay()]}
-                </span>
-                <span className="text-[14px] text-ink-muted">
-                  {formatoHora(turno.inicio)} – {formatoHora(turno.fin)}
-                </span>
-              </Card>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
+            Mis turnos
+          </h1>
+          <SemanaNav semanaInicio={semanaStr} />
+        </div>
+        <HorarioSemanaBoard
+          localId=""
+          semanaInicio={semanaStr}
+          turnos={turnosVista}
+          empleados={[]}
+          requeridasPorDia={[0, 0, 0, 0, 0, 0, 0]}
+          readOnly
+        />
       </div>
     );
   }
@@ -103,27 +105,56 @@ export default async function HorariosPage({
 
   const localId = params.localId ?? locales[0]?.id;
 
-  const turnos = localId
-    ? await prisma.turno.findMany({
-        where: {
-          empresaId,
-          usuario: { localId },
-          inicio: { gte: semanaInicio, lt: semanaFin },
-        },
-        include: { usuario: { select: { nombre: true } } },
-        orderBy: { inicio: "asc" },
-      })
-    : [];
+  const [turnos, empleados, plantilla] = localId
+    ? await Promise.all([
+        prisma.turno.findMany({
+          where: {
+            empresaId,
+            usuario: { localId },
+            inicio: { gte: semanaInicio, lt: semanaFin },
+          },
+          include: { usuario: { select: { nombre: true } } },
+          orderBy: { inicio: "asc" },
+        }),
+        prisma.usuario.findMany({
+          where: { localId, rol: "EMPLOYEE" },
+          select: { id: true, nombre: true },
+          orderBy: { nombre: "asc" },
+        }),
+        prisma.plantillaTurno.findMany({
+          where: { localId },
+          select: { diaSemana: true, personasRequeridas: true },
+        }),
+      ])
+    : [[], [], []];
+
+  const turnosVista: TurnoVista[] = turnos.map((turno) => ({
+    id: turno.id,
+    usuarioId: turno.usuarioId,
+    usuarioNombre: turno.usuario.nombre,
+    inicioIso: turno.inicio.toISOString(),
+    finIso: turno.fin.toISOString(),
+    origen: origenDeTurno(turno.metadata),
+  }));
+
+  const requeridasPorDia = DIAS_SEMANA.map((dia) =>
+    plantilla
+      .filter((bloque) => bloque.diaSemana === dia)
+      .reduce((acc, bloque) => acc + bloque.personasRequeridas, 0),
+  );
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
-          Horarios
-        </h1>
-        <p className="mt-1 text-[15px] text-ink-muted">
-          Genera y consulta el horario semanal de tu local.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
+            Horarios
+          </h1>
+          <p className="mt-1 text-[15px] text-ink-muted">
+            Genera, arrastra y ajusta el horario semanal de tu local.
+          </p>
+        </div>
+        {localId && <SemanaNav semanaInicio={semanaStr} />}
       </div>
 
       {locales.length === 0 ? (
@@ -136,33 +167,18 @@ export default async function HorariosPage({
             <GenerateForm
               locales={locales}
               localId={localId ?? ""}
-              semana={formatoFecha(semanaInicio)}
+              semana={semanaStr}
             />
           </Card>
 
-          {turnos.length === 0 ? (
-            <Card className="bg-canvas-soft text-center text-[15px] text-ink-muted">
-              No hay turnos generados para esta semana todavía.
-            </Card>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {turnos.map((turno) => (
-                <Card key={turno.id} className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[15px] font-medium text-ink">
-                      {JS_DAY_LABELS[turno.inicio.getDay()]}
-                    </span>
-                    <span className="text-[14px] text-ink-muted">
-                      {turno.usuario.nombre}
-                    </span>
-                  </div>
-                  <span className="text-[14px] text-ink-faint">
-                    {formatoHora(turno.inicio)} – {formatoHora(turno.fin)}
-                  </span>
-                </Card>
-              ))}
-            </div>
-          )}
+          <HorarioSemanaBoard
+            localId={localId ?? ""}
+            semanaInicio={semanaStr}
+            turnos={turnosVista}
+            empleados={empleados}
+            requeridasPorDia={requeridasPorDia}
+            readOnly={false}
+          />
         </>
       )}
     </div>

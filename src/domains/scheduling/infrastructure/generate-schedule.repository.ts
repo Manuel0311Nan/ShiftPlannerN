@@ -57,10 +57,14 @@ export class PrismaGenerateScheduleRepository
       select: { id: true },
     });
 
+    // Solo se borran los turnos generados automáticamente (metadata.generado);
+    // los creados/editados a mano (metadata.origen === "manual") se preservan
+    // al regenerar la semana.
     await this.db.turno.deleteMany({
       where: {
         usuarioId: { in: empleados.map((empleado) => empleado.id) },
         inicio: { gte: semanaInicio, lt: fin },
+        metadata: { path: ["generado"], equals: true },
       },
     });
   }
