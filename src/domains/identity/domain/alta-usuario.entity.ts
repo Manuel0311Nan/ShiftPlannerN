@@ -9,6 +9,10 @@ import {
   crearBloqueDisponibilidad,
   type BloqueDisponibilidad,
 } from "@/domains/employees/domain/bloque-disponibilidad";
+import {
+  crearCondiciones,
+  type CondicionTrabajador,
+} from "@/domains/employees/domain/condiciones-trabajador";
 
 export type NuevoUsuarioRol = "MANAGER" | "EMPLOYEE";
 
@@ -24,6 +28,11 @@ export type BloqueDisponibilidadInput = {
   diaSemana: string;
   horaInicio: string;
   horaFin: string;
+};
+
+export type CondicionInput = {
+  tipo: string;
+  minimo: number;
 };
 
 /**
@@ -42,6 +51,7 @@ export class AltaUsuario {
     readonly plantilla: BloquePlantilla[],
     readonly localId: string | null,
     readonly disponibilidad: BloqueDisponibilidad[],
+    readonly condiciones: CondicionTrabajador[],
   ) {}
 
   static create(props: {
@@ -55,6 +65,7 @@ export class AltaUsuario {
     plantilla?: BloquePlantillaInput[];
     localId?: string | null;
     disponibilidad?: BloqueDisponibilidadInput[];
+    condiciones?: CondicionInput[];
   }): Result<AltaUsuario> {
     const email = props.email.trim().toLowerCase();
     if (!EMAIL_REGEX.test(email)) {
@@ -94,6 +105,7 @@ export class AltaUsuario {
     let plantilla: BloquePlantilla[] = [];
     let localId: string | null = null;
     let disponibilidad: BloqueDisponibilidad[] = [];
+    let condiciones: CondicionTrabajador[] = [];
 
     if (props.rol === "MANAGER") {
       const nombreLocal = (props.localNombre ?? "").trim();
@@ -153,6 +165,10 @@ export class AltaUsuario {
       }
       disponibilidad = bloques;
       localId = props.localId ?? null;
+
+      const condicionesResult = crearCondiciones(props.condiciones ?? []);
+      if (!condicionesResult.success) return condicionesResult;
+      condiciones = condicionesResult.value;
     }
 
     return ok(
@@ -166,6 +182,7 @@ export class AltaUsuario {
         plantilla,
         localId,
         disponibilidad,
+        condiciones,
       ),
     );
   }

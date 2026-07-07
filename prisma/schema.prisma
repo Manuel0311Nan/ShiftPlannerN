@@ -23,6 +23,12 @@ enum DiaSemana {
   DOMINGO
 }
 
+enum TipoTurno {
+  APERTURA
+  CIERRE
+  PARTIDO
+}
+
 model Empresa {
   id              String           @id @default(cuid())
   nombre          String
@@ -35,6 +41,7 @@ model Empresa {
   locales         Local[]
   plantillasTurno PlantillaTurno[]
   disponibilidades Disponibilidad[]
+  condiciones     CondicionTurno[]
 }
 
 model Usuario {
@@ -54,6 +61,7 @@ model Usuario {
   local                    Local?           @relation("EmpleadosLocal", fields: [localId], references: [id], onDelete: SetNull)
   localesComoManager       Local[]          @relation("LocalesManager")
   disponibilidad           Disponibilidad[]
+  condiciones              CondicionTurno[]
   metadata                 Json             @default("{}")
   accounts                 Account[]
   sessions                 Session[]
@@ -109,6 +117,21 @@ model Disponibilidad {
   horaFin    String
   createdAt  DateTime  @default(now())
 
+  @@index([empresaId])
+  @@index([usuarioId])
+}
+
+model CondicionTurno {
+  id        String    @id @default(cuid())
+  empresaId String
+  empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuarioId String
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tipo      TipoTurno
+  minimo    Int
+  createdAt DateTime  @default(now())
+
+  @@unique([usuarioId, tipo])
   @@index([empresaId])
   @@index([usuarioId])
 }

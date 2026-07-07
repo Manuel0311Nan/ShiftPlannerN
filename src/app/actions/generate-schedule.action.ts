@@ -5,14 +5,18 @@ import { auth } from "@/auth";
 import {
   GenerateScheduleCommand,
   generateScheduleInputSchema,
+  type CondicionIncumplida,
   type HuecoReporte,
 } from "@/domains/scheduling/application/generate-schedule.command";
 import { PrismaGenerateScheduleRepository } from "@/domains/scheduling/infrastructure/generate-schedule.repository";
+import { YalpsScheduleSolver } from "@/domains/scheduling/infrastructure/yalps-solver";
 
 export type GenerateScheduleFormState = {
   error?: string;
+  generado?: boolean;
   turnosCreados?: number;
   huecos?: HuecoReporte[];
+  condicionesIncumplidas?: CondicionIncumplida[];
 };
 
 export async function generateScheduleAction(
@@ -34,6 +38,7 @@ export async function generateScheduleAction(
 
   const command = new GenerateScheduleCommand(
     new PrismaGenerateScheduleRepository(session.user.empresaId),
+    new YalpsScheduleSolver(),
   );
   const result = await command.execute(parsed.data, {
     invitadoPorId: session.user.id,
@@ -44,6 +49,13 @@ export async function generateScheduleAction(
     return { error: result.error.message };
   }
 
-  revalidatePath("/dashboard/horarios");
-  return { turnosCreados: result.value.turnosCreados, huecos: result.value.huecos };
+  if (result.value.generado) {
+    revalidatePath("/dashboard/horarios");
+  }
+  return {
+    generado: result.value.generado,
+    turnosCreados: result.value.turnosCreados,
+    huecos: result.value.huecos,
+    condicionesIncumplidas: result.value.condicionesIncumplidas,
+  };
 }

@@ -3,6 +3,7 @@ import type { CreateUserRepository } from "@/domains/identity/application/ports/
 import type { NuevoUsuarioRol } from "@/domains/identity/domain/alta-usuario.entity";
 import type { BloquePlantilla } from "@/domains/shifts/domain/bloque-plantilla";
 import type { BloqueDisponibilidad } from "@/domains/employees/domain/bloque-disponibilidad";
+import type { CondicionTrabajador } from "@/domains/employees/domain/condiciones-trabajador";
 import type { DiaSemana } from "@/generated/prisma/enums";
 
 export class PrismaCreateUserRepository implements CreateUserRepository {
@@ -33,6 +34,7 @@ export class PrismaCreateUserRepository implements CreateUserRepository {
     plantilla: BloquePlantilla[];
     localId: string | null;
     disponibilidad: BloqueDisponibilidad[];
+    condiciones: CondicionTrabajador[];
   }): Promise<{ usuarioId: string }> {
     return prisma.$transaction(async (tx) => {
       const usuario = await tx.usuario.create({
@@ -78,6 +80,16 @@ export class PrismaCreateUserRepository implements CreateUserRepository {
             horaFin: bloque.horaFin,
           })),
         });
+        if (input.condiciones.length > 0) {
+          await tx.condicionTurno.createMany({
+            data: input.condiciones.map((condicion) => ({
+              empresaId: this.empresaId,
+              usuarioId: usuario.id,
+              tipo: condicion.tipo,
+              minimo: condicion.minimo,
+            })),
+          });
+        }
       }
 
       return { usuarioId: usuario.id };

@@ -8,7 +8,7 @@ import {
   createUserInputSchema,
 } from "@/domains/identity/application/create-user.command";
 import { PrismaCreateUserRepository } from "@/domains/identity/infrastructure/create-user.repository";
-import { ResendEmailSender } from "@/domains/identity/infrastructure/resend-email-sender";
+import { NodemailerEmailSender } from "@/domains/identity/infrastructure/nodemailer-email-sender";
 
 export type CreateUserFormState = { error?: string; success?: boolean };
 
@@ -23,6 +23,7 @@ export async function createUserAction(
 
   const plantillaRaw = formData.get("plantilla");
   const disponibilidadRaw = formData.get("disponibilidad");
+  const condicionesRaw = formData.get("condiciones");
 
   const parsed = createUserInputSchema.safeParse({
     email: formData.get("email"),
@@ -35,6 +36,7 @@ export async function createUserAction(
     disponibilidad: disponibilidadRaw
       ? JSON.parse(String(disponibilidadRaw))
       : undefined,
+    condiciones: condicionesRaw ? JSON.parse(String(condicionesRaw)) : undefined,
   });
   if (!parsed.success) {
     return { error: "Revisa los datos del formulario" };
@@ -47,7 +49,7 @@ export async function createUserAction(
 
   const command = new CreateUserCommand(
     new PrismaCreateUserRepository(session.user.empresaId),
-    new ResendEmailSender(),
+    new NodemailerEmailSender(),
   );
 
   const result = await command.execute(parsed.data, {

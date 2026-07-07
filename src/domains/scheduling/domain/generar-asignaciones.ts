@@ -23,18 +23,18 @@ export type Empleado = {
 export type Asignacion = { bloqueId: string; usuarioId: string };
 export type Hueco = { bloqueId: string; faltan: number };
 
-function minutos(hora: string): number {
+export function minutos(hora: string): number {
   const [h, m] = hora.split(":").map(Number);
   return h * 60 + m;
 }
 
-function duracionHoras(bloque: { horaInicio: string; horaFin: string }): number {
+export function duracionHoras(bloque: { horaInicio: string; horaFin: string }): number {
   return (minutos(bloque.horaFin) - minutos(bloque.horaInicio)) / 60;
 }
 
-function cubre(
+export function cubre(
   disponibilidad: DisponibilidadEmpleado,
-  bloque: BloqueRequerido,
+  bloque: { diaSemana: DiaSemana; horaInicio: string; horaFin: string },
 ): boolean {
   return (
     disponibilidad.diaSemana === bloque.diaSemana &&
@@ -43,7 +43,7 @@ function cubre(
   );
 }
 
-function seSuperponen(
+export function seSuperponen(
   a: { diaSemana: DiaSemana; horaInicio: string; horaFin: string },
   b: { diaSemana: DiaSemana; horaInicio: string; horaFin: string },
 ): boolean {

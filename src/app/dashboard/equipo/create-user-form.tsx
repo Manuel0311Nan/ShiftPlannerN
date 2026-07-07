@@ -14,6 +14,7 @@ import {
 } from "@/shared/ui/select";
 import { PlantillaEditor } from "@/domains/shifts/ui/plantilla-editor";
 import { DisponibilidadEditor } from "@/domains/employees/ui/disponibilidad-editor";
+import { CondicionesEditor } from "@/domains/employees/ui/condiciones-editor";
 
 type Manager = { id: string; nombre: string; locales: { id: string; nombre: string }[] };
 
@@ -118,7 +119,12 @@ export function CreateUserForm({
       )}
 
       {rol === "MANAGER" && <PlantillaEditor />}
-      {rol === "EMPLOYEE" && <DisponibilidadEditor />}
+      {rol === "EMPLOYEE" && (
+        <>
+          <DisponibilidadEditor />
+          <CondicionesEditor />
+        </>
+      )}
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state.success && (
