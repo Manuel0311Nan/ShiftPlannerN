@@ -3,8 +3,12 @@ import type {
   BloqueRequerido,
   Empleado,
 } from "@/domains/scheduling/domain/generar-asignaciones";
-import type { GenerateScheduleRepository } from "@/domains/scheduling/application/ports/generate-schedule-repository.port";
+import type {
+  EmpleadoParaOptimizacion,
+  GenerateScheduleRepository,
+} from "@/domains/scheduling/application/ports/generate-schedule-repository.port";
 import type { DiaSemana } from "@/shared/kernel/dia-semana";
+import type { TipoTurno } from "@/shared/kernel/tipo-turno";
 
 export class PrismaGenerateScheduleRepository
   extends TenantRepository
@@ -44,6 +48,28 @@ export class PrismaGenerateScheduleRepository
         diaSemana: bloque.diaSemana as DiaSemana,
         horaInicio: bloque.horaInicio,
         horaFin: bloque.horaFin,
+      })),
+    }));
+  }
+
+  async empleadosParaOptimizacion(
+    localId: string,
+  ): Promise<EmpleadoParaOptimizacion[]> {
+    const empleados = await this.db.usuario.findMany({
+      where: { localId, rol: "EMPLOYEE" },
+      include: { disponibilidad: true, condiciones: true },
+    });
+    return empleados.map((empleado) => ({
+      id: empleado.id,
+      nombre: empleado.nombre,
+      disponibilidad: empleado.disponibilidad.map((bloque) => ({
+        diaSemana: bloque.diaSemana as DiaSemana,
+        horaInicio: bloque.horaInicio,
+        horaFin: bloque.horaFin,
+      })),
+      condiciones: empleado.condiciones.map((condicion) => ({
+        tipo: condicion.tipo as TipoTurno,
+        minimo: condicion.minimo,
       })),
     }));
   }

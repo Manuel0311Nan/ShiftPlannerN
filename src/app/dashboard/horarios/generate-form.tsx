@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { generateScheduleAction } from "@/app/actions/generate-schedule.action";
+import { TIPO_TURNO_LABEL } from "@/shared/kernel/tipo-turno";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -66,7 +67,30 @@ export function GenerateForm({
       </div>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-      {state.turnosCreados !== undefined && (
+
+      {state.condicionesIncumplidas && state.condicionesIncumplidas.length > 0 && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+          <p className="font-medium text-destructive">
+            No se pudo generar el horario: no se pueden cumplir las condiciones.
+          </p>
+          <ul className="mt-1 list-disc pl-5 text-ink-secondary">
+            {state.condicionesIncumplidas.map((condicion, i) => {
+              const tipo = TIPO_TURNO_LABEL[condicion.tipo].toLowerCase();
+              return (
+                <li key={i}>
+                  {condicion.usuarioNombre}: faltan {condicion.faltan} {tipo}
+                  {condicion.faltan === 1 ? "" : "s"}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-1 text-xs text-ink-faint">
+            Ajusta las condiciones o la disponibilidad del trabajador y vuelve a intentarlo.
+          </p>
+        </div>
+      )}
+
+      {state.generado && (
         <p className="text-sm text-accent-green">
           {state.turnosCreados} turno{state.turnosCreados === 1 ? "" : "s"} generado
           {state.turnosCreados === 1 ? "" : "s"}.

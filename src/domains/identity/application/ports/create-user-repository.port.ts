@@ -1,6 +1,7 @@
 import type { NuevoUsuarioRol } from "@/domains/identity/domain/alta-usuario.entity";
 import type { BloquePlantilla } from "@/domains/shifts/domain/bloque-plantilla";
 import type { BloqueDisponibilidad } from "@/domains/employees/domain/bloque-disponibilidad";
+import type { CondicionTrabajador } from "@/domains/employees/domain/condiciones-trabajador";
 
 export interface CreateUserRepository {
   emailEnUso(email: string): Promise<boolean>;
@@ -15,6 +16,7 @@ export interface CreateUserRepository {
     plantilla: BloquePlantilla[];
     localId: string | null;
     disponibilidad: BloqueDisponibilidad[];
+    condiciones: CondicionTrabajador[];
   }): Promise<{ usuarioId: string }>;
   eliminar(usuarioId: string): Promise<void>;
 }

@@ -20,6 +20,11 @@ const bloqueDisponibilidadSchema = z.object({
   horaFin: z.string(),
 });
 
+const condicionSchema = z.object({
+  tipo: z.string(),
+  minimo: z.coerce.number().int(),
+});
+
 export const createUserInputSchema = z.object({
   email: z.string().email(),
   nombre: z.string().min(2),
@@ -29,6 +34,7 @@ export const createUserInputSchema = z.object({
   plantilla: z.array(bloquePlantillaSchema).optional(),
   localId: z.string().optional(),
   disponibilidad: z.array(bloqueDisponibilidadSchema).optional(),
+  condiciones: z.array(condicionSchema).optional(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserInputSchema>;
@@ -60,6 +66,7 @@ export class CreateUserCommand {
       plantilla: input.plantilla,
       localId: input.localId,
       disponibilidad: input.disponibilidad,
+      condiciones: input.condiciones,
     });
     if (!altaResult.success) return altaResult;
     const alta = altaResult.value;
@@ -119,6 +126,7 @@ export class CreateUserCommand {
       plantilla: alta.plantilla,
       localId: resolvedLocalId,
       disponibilidad: alta.disponibilidad,
+      condiciones: alta.condiciones,
     });
 
     try {
@@ -129,7 +137,10 @@ export class CreateUserCommand {
         rol: alta.rol,
         password,
       });
-    } catch {
+    } catch (error) {
+      // El mensaje al usuario es genérico, pero el fallo real del proveedor
+      // (p. ej. credenciales SMTP mal, límite de Gmail) debe quedar en logs.
+      console.error("[create-user] fallo al enviar credenciales:", error);
       await this.repo.eliminar(usuarioId);
       return fail(
         new DomainError(
