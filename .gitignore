@@ -52,3 +52,5 @@ next-env.d.ts
 /DESIGN.md
 /CHANGELOG.md
 .vercel
+
+/docs

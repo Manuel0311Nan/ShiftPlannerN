@@ -1,43 +1,54 @@
-import Link from "next/link";
+import { Plus } from "lucide-react";
 import { auth } from "@/auth";
-import { Card } from "@/shared/ui/card";
-import { menuForRol } from "./menu";
+import { Button } from "@/shared/ui/button";
+import { AttendanceCard } from "./_overview/attendance-card";
+import { MetricsRow } from "./_overview/metrics-row";
+import { QuickActions } from "./_overview/quick-actions";
+import { TodaysShifts } from "./_overview/todays-shifts";
+import { WeeklyHoursCard } from "./_overview/weekly-hours-card";
+
+function saludo(fecha = new Date()): string {
+  const hora = fecha.getHours();
+  if (hora < 12) return "Buenos días";
+  if (hora < 20) return "Buenas tardes";
+  return "Buenas noches";
+}
 
 export default async function DashboardPage() {
   const session = await auth();
-  const menu = menuForRol(session!.user.rol);
+  const nombre = session!.user.name;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
-          Hola, {session!.user.name}
-        </h1>
-        <p className="mt-1 text-[15px] text-ink-muted">
-          Empresa: {session!.user.empresaId}
-        </p>
+    <div>
+      {/* Encabezado + CTA */}
+      <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div>
+          <p className="mb-1 text-label-caps uppercase text-primary">
+            Resumen del panel
+          </p>
+          <h1 className="text-h1 text-ink">
+            {saludo()}, {nombre}
+          </h1>
+          <p className="mt-2 text-body-lg text-ink-muted">
+            Esto es lo que ocurre hoy en tu centro.
+          </p>
+        </div>
+        <Button className="shadow-md">
+          <Plus className="size-4" />
+          Crear turno
+        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {menu.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link key={item.href} href={item.href}>
-              <Card elevated className="flex h-full flex-col gap-3 transition-transform hover:-translate-y-0.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-canvas-soft text-primary">
-                  <Icon size={20} />
-                </div>
-                <h3 className="text-[20px] font-semibold leading-[1.4] tracking-[-0.125px] text-ink">
-                  {item.label}
-                </h3>
-                <p className="text-[15px] leading-[1.33] text-ink-muted">
-                  {item.description}
-                </p>
-              </Card>
-            </Link>
-          );
-        })}
+      {/* Bento grid */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+        <AttendanceCard />
+        <WeeklyHoursCard />
+        <TodaysShifts />
+        <QuickActions />
       </div>
+
+      {/* Métricas */}
+      <MetricsRow />
     </div>
   );
 }
