@@ -23,6 +23,7 @@ export async function createUserAction(
 
   const plantillaRaw = formData.get("plantilla");
   const disponibilidadRaw = formData.get("disponibilidad");
+  const condicionesRaw = formData.get("condiciones");
 
   const parsed = createUserInputSchema.safeParse({
     email: formData.get("email"),
@@ -35,6 +36,7 @@ export async function createUserAction(
     disponibilidad: disponibilidadRaw
       ? JSON.parse(String(disponibilidadRaw))
       : undefined,
+    condiciones: condicionesRaw ? JSON.parse(String(condicionesRaw)) : undefined,
   });
   if (!parsed.success) {
     return { error: "Revisa los datos del formulario" };
