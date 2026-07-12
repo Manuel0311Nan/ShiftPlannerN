@@ -11,6 +11,12 @@ const envSchema = z.object({
   // error controlado en vez de romper el resto de la app al importar env.ts.
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().email().default("onboarding@resend.dev"),
+  // Envío vía SMTP de Gmail (remitente genérico único para todas las empresas,
+  // p. ej. infoscheduleia@gmail.com). GMAIL_APP_PASSWORD es una "App Password"
+  // de Google, no la contraseña normal de la cuenta. Ambas opcionales: si
+  // faltan, el envío falla de forma controlada sin romper el arranque.
+  GMAIL_USER: z.string().email().optional(),
+  GMAIL_APP_PASSWORD: z.string().min(1).optional(),
   APP_URL: z.string().url().optional(),
 });
 

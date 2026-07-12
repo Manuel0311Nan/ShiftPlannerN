@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { DIAS_SEMANA } from "@/shared/kernel/dia-semana";
@@ -169,6 +170,16 @@ export default async function HorariosPage({
               localId={localId ?? ""}
               semana={semanaStr}
             />
+            {localId && (
+              <div className="mt-3 border-t border-hairline pt-3">
+                <Link
+                  href={`/dashboard/locales/${localId}`}
+                  className="text-[14px] font-medium text-primary hover:underline"
+                >
+                  Editar plantilla del local
+                </Link>
+              </div>
+            )}
           </Card>
 
           <HorarioSemanaBoard

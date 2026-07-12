@@ -59,24 +59,23 @@ export default async function EmpleadosPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {empleados.map((empleado) => (
-            <Card
-              key={empleado.id}
-              className="flex items-center justify-between"
-            >
-              <div className="flex flex-col">
-                <span className="text-[15px] font-medium text-ink">
-                  {empleado.nombre}
-                </span>
-                <span className="text-[14px] text-ink-muted">
-                  {empleado.email}
-                </span>
-              </div>
-              {session!.user.rol === "ADMIN" && (
-                <span className="text-[14px] text-ink-faint">
-                  Manager: {empleado.manager?.nombre}
-                </span>
-              )}
-            </Card>
+            <Link key={empleado.id} href={`/dashboard/empleados/${empleado.id}`}>
+              <Card className="flex items-center justify-between transition-colors hover:bg-canvas-soft">
+                <div className="flex flex-col">
+                  <span className="text-[15px] font-medium text-ink">
+                    {empleado.nombre}
+                  </span>
+                  <span className="text-[14px] text-ink-muted">
+                    {empleado.email}
+                  </span>
+                </div>
+                {session!.user.rol === "ADMIN" && (
+                  <span className="text-[14px] text-ink-faint">
+                    Manager: {empleado.manager?.nombre}
+                  </span>
+                )}
+              </Card>
+            </Link>
           ))}
         </div>
       )}
