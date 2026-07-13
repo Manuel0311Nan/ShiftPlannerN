@@ -39,48 +39,54 @@ export function DayColumn({
   const { setNodeRef, isOver } = useDroppable({ id: `dia-${indice}`, disabled: readOnly });
 
   const faltan = requeridas - turnos.length;
+  const esFinde = indice >= 5;
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-h-40 flex-col gap-2 rounded-lg border border-hairline bg-surface p-3 transition-colors",
+        "flex min-h-48 flex-col gap-2.5 rounded-lg border border-hairline bg-surface p-3 transition-colors",
+        esFinde && "bg-canvas-soft/40",
         isOver && "border-primary bg-primary/5",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-sm font-semibold text-ink">{label}</p>
-          <p className="text-[11px] text-ink-faint tabular-nums">
-            {fecha.getDate()}/{fecha.getMonth() + 1}
-            {requeridas > 0 &&
-              (faltan > 0 ? (
-                <span className="text-accent-orange-deep"> · faltan {faltan}</span>
-              ) : (
-                <span> · {turnos.length}</span>
-              ))}
-          </p>
+      <div className="flex items-center justify-between gap-2 border-b border-hairline pb-2.5">
+        <div className="flex items-baseline gap-2">
+          <span className="text-title-md text-ink">{fecha.getDate()}</span>
+          <span className="text-label-caps uppercase text-ink-muted">{label}</span>
         </div>
-        {!readOnly && empleados.length > 0 && (
-          <Popover open={addOpen} onOpenChange={setAddOpen}>
-            <PopoverTrigger
-              render={
-                <IconButton label="Añadir turno" variant="ghost" size="sm">
-                  <Plus size={14} />
-                </IconButton>
-              }
-            />
-            <PopoverContent className="w-72">
-              <CrearTurnoPopoverContent
-                empleados={empleados}
-                onCrear={(usuarioId, horaInicio, horaFin) =>
-                  onCrear(indice, usuarioId, horaInicio, horaFin)
+        <div className="flex items-center gap-1">
+          {requeridas > 0 &&
+            (faltan > 0 ? (
+              <span className="rounded bg-accent-orange-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent-orange-deep">
+                Faltan {faltan}
+              </span>
+            ) : (
+              <span className="rounded bg-accent-green-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent-green">
+                Completo
+              </span>
+            ))}
+          {!readOnly && empleados.length > 0 && (
+            <Popover open={addOpen} onOpenChange={setAddOpen}>
+              <PopoverTrigger
+                render={
+                  <IconButton label="Añadir turno" variant="ghost" size="sm">
+                    <Plus size={14} />
+                  </IconButton>
                 }
-                onClose={() => setAddOpen(false)}
               />
-            </PopoverContent>
-          </Popover>
-        )}
+              <PopoverContent className="w-72">
+                <CrearTurnoPopoverContent
+                  empleados={empleados}
+                  onCrear={(usuarioId, horaInicio, horaFin) =>
+                    onCrear(indice, usuarioId, horaInicio, horaFin)
+                  }
+                  onClose={() => setAddOpen(false)}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -96,7 +102,9 @@ export function DayColumn({
           />
         ))}
         {turnos.length === 0 && (
-          <p className="py-4 text-center text-xs text-ink-faint">Sin turnos</p>
+          <div className="rounded-lg border border-dashed border-hairline py-5 text-center text-xs text-ink-faint">
+            Sin turnos
+          </div>
         )}
       </div>
     </div>

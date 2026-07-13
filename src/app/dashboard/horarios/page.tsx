@@ -74,9 +74,12 @@ export default async function HorariosPage({
     return (
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
-            Mis turnos
-          </h1>
+          <div>
+            <p className="mb-1 text-label-caps uppercase text-primary">
+              Mi calendario
+            </p>
+            <h1 className="text-h2 text-ink">Mis turnos</h1>
+          </div>
           <SemanaNav semanaInicio={semanaStr} />
         </div>
         <HorarioSemanaBoard
@@ -148,10 +151,11 @@ export default async function HorariosPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
-            Horarios
-          </h1>
-          <p className="mt-1 text-[15px] text-ink-muted">
+          <p className="mb-1 text-label-caps uppercase text-primary">
+            Planificación
+          </p>
+          <h1 className="text-h2 text-ink">Horarios</h1>
+          <p className="mt-1 text-body-sm text-ink-muted">
             Genera, arrastra y ajusta el horario semanal de tu local.
           </p>
         </div>

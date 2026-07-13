@@ -71,9 +71,18 @@ export function conHora(baseIso: string, hhmm: string): Date {
   return out;
 }
 
-export function colorFranja(inicioIso: string): string {
+export type Franja = "morning" | "afternoon" | "night";
+
+/** Franja horaria de un turno según su hora de inicio. */
+export function franjaDe(inicioIso: string): Franja {
   const hora = new Date(inicioIso).getHours();
-  if (hora < 12) return "border-deep-sky-blue/30 bg-deep-sky-blue-soft text-deep-sky-blue";
-  if (hora < 19) return "border-cool-horizon/30 bg-cool-horizon-soft text-cool-horizon";
-  return "border-fuchsia-plum/30 bg-fuchsia-plum-soft text-fuchsia-plum";
+  if (hora < 12) return "morning";
+  if (hora < 19) return "afternoon";
+  return "night";
 }
+
+export const FRANJA_LABEL: Record<Franja, string> = {
+  morning: "Mañana",
+  afternoon: "Tarde",
+  night: "Noche",
+};

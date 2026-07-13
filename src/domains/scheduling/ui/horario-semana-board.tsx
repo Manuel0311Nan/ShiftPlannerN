@@ -9,6 +9,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
+import { AlertTriangle, Gauge, Users } from "lucide-react";
 import { moveTurnoAction } from "@/app/actions/move-turno.action";
 import { updateTurnoAction } from "@/app/actions/update-turno.action";
 import { createTurnoAction } from "@/app/actions/create-turno.action";
@@ -249,13 +250,88 @@ function BoardInner({
     );
   }
 
+  // Resumen de cobertura, derivado del estado optimista de turnos + la
+  // plantilla del local (personas requeridas por día).
+  const turnosPorDia = [0, 0, 0, 0, 0, 0, 0];
+  for (const t of turnos) {
+    turnosPorDia[(new Date(t.inicioIso).getDay() + 6) % 7] += 1;
+  }
+  const totalRequeridas = requeridasPorDia.reduce((a, b) => a + b, 0);
+  const cubiertas = requeridasPorDia.reduce(
+    (acc, req, i) => acc + Math.min(req, turnosPorDia[i]),
+    0,
+  );
+  const huecos = requeridasPorDia.reduce(
+    (acc, req, i) => acc + Math.max(0, req - turnosPorDia[i]),
+    0,
+  );
+  const cobertura =
+    totalRequeridas > 0 ? Math.round((cubiertas / totalRequeridas) * 100) : 100;
+
   // DndContext envuelve siempre (también en readOnly, con el drag deshabilitado
   // vía `disabled` en cada celda/tarjeta) para que los hooks de dnd-kit tengan
   // su contexto disponible.
   return (
-    <DndContext sensors={readOnly ? [] : sensors} onDragEnd={handleDragEnd}>
-      {columnas}
-    </DndContext>
+    <div className="flex flex-col gap-6">
+      <DndContext sensors={readOnly ? [] : sensors} onDragEnd={handleDragEnd}>
+        {columnas}
+      </DndContext>
+
+      {!readOnly && totalRequeridas > 0 && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <ResumenItem
+            icon={Users}
+            tono="primary"
+            label="Turnos asignados"
+            valor={`${turnos.length} / ${totalRequeridas}`}
+          />
+          <ResumenItem
+            icon={Gauge}
+            tono="success"
+            label="Cobertura de la semana"
+            valor={`${cobertura}%`}
+          />
+          <ResumenItem
+            icon={AlertTriangle}
+            tono="warning"
+            label="Huecos sin cubrir"
+            valor={String(huecos)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const RESUMEN_TONO = {
+  primary: "bg-primary/10 text-primary",
+  success: "bg-accent-green-soft text-accent-green",
+  warning: "bg-accent-orange-soft text-accent-orange-deep",
+} as const;
+
+function ResumenItem({
+  icon: Icon,
+  tono,
+  label,
+  valor,
+}: {
+  icon: typeof Users;
+  tono: keyof typeof RESUMEN_TONO;
+  label: string;
+  valor: string;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-hairline bg-surface p-5 shadow-sm">
+      <span
+        className={`flex size-12 shrink-0 items-center justify-center rounded-full ${RESUMEN_TONO[tono]}`}
+      >
+        <Icon size={22} />
+      </span>
+      <div>
+        <p className="text-label-caps uppercase text-ink-muted">{label}</p>
+        <p className="text-h3 text-ink">{valor}</p>
+      </div>
+    </div>
   );
 }
 
