@@ -8,4 +8,9 @@ export interface EmailSender {
     rol: NuevoUsuarioRol;
     password: string;
   }): Promise<void>;
+  notificarCambioEmail(input: {
+    to: string;
+    nombre: string;
+    empresaNombre: string;
+  }): Promise<void>;
 }

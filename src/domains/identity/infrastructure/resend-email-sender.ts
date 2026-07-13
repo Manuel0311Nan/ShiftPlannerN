@@ -37,4 +37,30 @@ export class ResendEmailSender implements EmailSender {
       throw new Error(error.message);
     }
   }
+
+  async notificarCambioEmail(input: {
+    to: string;
+    nombre: string;
+    empresaNombre: string;
+  }): Promise<void> {
+    if (!env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY no está configurada");
+    }
+
+    const client = new Resend(env.RESEND_API_KEY);
+    const url = `${getAppUrl()}/login`;
+
+    const { error } = await client.emails.send({
+      from: env.EMAIL_FROM,
+      to: input.to,
+      subject: `Tu email de acceso en ${input.empresaNombre} ha cambiado`,
+      html: `<p>Hola ${input.nombre}, el email con el que accedes a <strong>${input.empresaNombre}</strong> se ha actualizado a <strong>${input.to}</strong>.</p>
+<p>A partir de ahora inicia sesión con este email. Tu contraseña no ha cambiado.</p>
+<p><a href="${url}">Iniciar sesión</a></p>`,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
 }
