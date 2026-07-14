@@ -51,18 +51,20 @@ export function DayColumn({
       )}
     >
       <div className="flex items-center justify-between gap-2 border-b border-hairline pb-2.5">
-        <div className="flex items-baseline gap-2">
+        <div className="flex min-w-0 items-baseline gap-2">
           <span className="text-title-md text-ink">{fecha.getDate()}</span>
-          <span className="text-label-caps uppercase text-ink-muted">{label}</span>
+          <span className="truncate text-label-caps uppercase text-ink-muted">
+            {label}
+          </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           {requeridas > 0 &&
             (faltan > 0 ? (
-              <span className="rounded bg-accent-orange-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent-orange-deep">
+              <span className="whitespace-nowrap rounded bg-accent-orange-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent-orange-deep">
                 Faltan {faltan}
               </span>
             ) : (
-              <span className="rounded bg-accent-green-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent-green">
+              <span className="whitespace-nowrap rounded bg-accent-green-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent-green">
                 Completo
               </span>
             ))}

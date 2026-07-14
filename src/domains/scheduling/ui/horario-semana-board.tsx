@@ -211,7 +211,7 @@ function BoardInner({
   }
 
   const columnas = (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {DIAS.map((dia, indice) => {
         const fecha = new Date(lunes);
         fecha.setDate(fecha.getDate() + indice);
