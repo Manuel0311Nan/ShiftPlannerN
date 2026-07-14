@@ -10,7 +10,7 @@ export default function RegisterPage() {
           href="/"
           className="text-center text-[20px] font-semibold tracking-[-0.125px] text-ink"
         >
-          ScheduleAI
+          Turnia
         </Link>
 
         <Card elevated className="flex flex-col gap-6">

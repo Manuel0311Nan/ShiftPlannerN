@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ScheduleAI — Horarios laborales automáticos",
+  title: "Turnia — Horarios laborales automáticos",
   description:
     "Genera horarios laborales óptimos automáticamente: turnos, disponibilidad y restricciones legales en un solo lugar.",
 };
