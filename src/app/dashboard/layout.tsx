@@ -30,7 +30,7 @@ export default async function DashboardLayout({
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-hairline bg-surface py-6 md:flex">
         <div className="mb-10 px-6">
           <Link href="/dashboard" className="block">
-            <span className="text-h3 text-primary">ScheduleAI</span>
+            <span className="text-h3 text-primary">Turnia</span>
             <p className="text-label-caps uppercase text-ink-muted">
               Management Suite
             </p>
@@ -69,7 +69,7 @@ export default async function DashboardLayout({
             />
           </div>
           <Link href="/dashboard" className="text-title-md text-primary md:hidden">
-            ScheduleAI
+            Turnia
           </Link>
 
           <div className="flex items-center gap-4">

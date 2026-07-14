@@ -44,7 +44,7 @@ export default function Home() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-hairline bg-surface/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-295 items-center justify-between px-6 md:px-8">
-          <span className="text-h3 text-primary">ScheduleAI</span>
+          <span className="text-h3 text-primary">Turnia</span>
           <nav className="hidden items-center gap-6 md:flex">
             <a
               href="#caracteristicas"
@@ -106,7 +106,7 @@ export default function Home() {
               Gestiona tus turnos con la claridad de un documento.
             </h1>
             <p className="mt-6 max-w-160 text-body-lg leading-relaxed text-white/75">
-              ScheduleAI genera los turnos de tu empresa automáticamente,
+              Turnia genera los turnos de tu empresa automáticamente,
               respetando disponibilidad, restricciones legales y la jerarquía de
               managers y empleados.
             </p>
@@ -279,9 +279,9 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-hairline bg-surface px-6 py-10 md:px-8">
         <div className="mx-auto flex max-w-295 flex-col items-center justify-between gap-4 md:flex-row">
-          <span className="text-h3 text-primary">ScheduleAI</span>
+          <span className="text-h3 text-primary">Turnia</span>
           <span className="text-body-sm text-ink-muted">
-            © {new Date().getFullYear()} ScheduleAI. Todos los derechos
+            © {new Date().getFullYear()} Turnia. Todos los derechos
             reservados.
           </span>
         </div>

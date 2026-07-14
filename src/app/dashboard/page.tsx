@@ -33,7 +33,9 @@ export default async function DashboardPage() {
             Esto es lo que ocurre hoy en tu centro.
           </p>
         </div>
-        <Button className="shadow-md">
+        {/* Sin vista propia todavía: los turnos se crean desde el calendario
+            de Horarios. Bloqueado hasta que exista el flujo dedicado. */}
+        <Button className="shadow-md" disabled title="Próximamente">
           <Plus className="size-4" />
           Crear turno
         </Button>
