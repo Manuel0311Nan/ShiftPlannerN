@@ -10,7 +10,12 @@ import {
 import { PrismaCreateUserRepository } from "@/domains/identity/infrastructure/create-user.repository";
 import { NodemailerEmailSender } from "@/domains/identity/infrastructure/nodemailer-email-sender";
 
-export type CreateUserFormState = { error?: string; success?: boolean };
+export type CreateUserFormState = {
+  error?: string;
+  success?: boolean;
+  usuarioId?: string;
+  rol?: "MANAGER" | "EMPLOYEE";
+};
 
 export async function createUserAction(
   _prevState: CreateUserFormState,
@@ -65,5 +70,5 @@ export async function createUserAction(
   revalidatePath("/dashboard/equipo");
   revalidatePath("/dashboard/managers");
   revalidatePath("/dashboard/empleados");
-  return { success: true };
+  return { success: true, usuarioId: result.value.usuarioId, rol: parsed.data.rol };
 }

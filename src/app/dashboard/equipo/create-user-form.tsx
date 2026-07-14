@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { createUserAction } from "@/app/actions/create-user.action";
+import { alertaError, toastExito } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -29,16 +31,43 @@ export function CreateUserForm({
   initialRol: "MANAGER" | "EMPLOYEE";
   initialManagerId: string;
 }) {
-  const [state, formAction, pending] = useActionState(createUserAction, {});
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
   const [rol, setRol] = useState<"MANAGER" | "EMPLOYEE">(initialRol);
   const [managerId, setManagerId] = useState(initialManagerId);
+  // Cambiar esta key remonta los campos del formulario (incluidos los editores
+  // de horario/disponibilidad, que tienen estado propio) para dejarlo en blanco.
+  const [formKey, setFormKey] = useState(0);
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(async () => {
+      const result = await createUserAction({}, formData);
+      if (result.error) {
+        alertaError(result.error);
+        return;
+      }
+      if (result.rol === "MANAGER" && result.usuarioId) {
+        // Manager creado: ir a su ficha.
+        toastExito("Manager creado. Le enviamos sus credenciales por email.");
+        router.push(`/dashboard/managers/${result.usuarioId}`);
+        return;
+      }
+      // Trabajador creado: limpiar el formulario para crear otro.
+      toastExito("Trabajador creado. Le enviamos sus credenciales por email.");
+      setRol(initialRol);
+      setManagerId(initialManagerId);
+      setFormKey((k) => k + 1);
+    });
+  }
 
   const managerSeleccionado =
     viewerRol === "MANAGER" ? managers[0] : managers.find((m) => m.id === managerId);
   const locales = managerSeleccionado?.locales ?? [];
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form key={formKey} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="nombre">Nombre</Label>
         <Input id="nombre" name="nombre" required minLength={2} />
@@ -56,6 +85,7 @@ export function CreateUserForm({
             name="rol"
             value={rol}
             onValueChange={(value) => setRol(value as "MANAGER" | "EMPLOYEE")}
+            items={{ MANAGER: "Manager", EMPLOYEE: "Trabajador" }}
           >
             <SelectTrigger id="rol">
               <SelectValue />
@@ -78,6 +108,7 @@ export function CreateUserForm({
             required
             value={managerId}
             onValueChange={(value) => setManagerId(value ?? "")}
+            items={Object.fromEntries(managers.map((m) => [m.id, m.nombre]))}
           >
             <SelectTrigger id="managerId">
               <SelectValue placeholder="Selecciona un manager" />
@@ -96,7 +127,11 @@ export function CreateUserForm({
       {rol === "EMPLOYEE" && locales.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="localId">Local</Label>
-          <Select name="localId" required>
+          <Select
+            name="localId"
+            required
+            items={Object.fromEntries(locales.map((l) => [l.id, l.nombre]))}
+          >
             <SelectTrigger id="localId">
               <SelectValue placeholder="Selecciona un local" />
             </SelectTrigger>
@@ -124,13 +159,6 @@ export function CreateUserForm({
           <DisponibilidadEditor />
           <CondicionesEditor />
         </>
-      )}
-
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-      {state.success && (
-        <p className="text-sm text-accent-green">
-          Cuenta creada. Le enviamos las credenciales por email.
-        </p>
       )}
 
       <Button type="submit" variant="primary" loading={pending}>
