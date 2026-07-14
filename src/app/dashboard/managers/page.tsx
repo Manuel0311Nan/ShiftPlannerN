@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Store, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Badge } from "@/shared/ui/badge";
+import { Avatar } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 
@@ -23,6 +23,10 @@ export default async function ManagersPage() {
       nombre: true,
       email: true,
       _count: { select: { empleados: true } },
+      localesComoManager: {
+        select: { nombre: true },
+        orderBy: { nombre: "asc" },
+      },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -31,48 +35,106 @@ export default async function ManagersPage() {
     <div className="flex flex-col gap-6">
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-[15px] text-ink-muted hover:text-ink"
+        className="inline-flex items-center gap-1.5 text-body-sm text-ink-muted hover:text-ink"
       >
         <ArrowLeft size={16} />
         Volver
       </Link>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-ink">
-            Managers
-          </h1>
-          <p className="mt-1 text-[15px] text-ink-muted">
-            Managers de tu empresa y los equipos que tienen a cargo.
+          <p className="mb-1 text-label-caps uppercase text-primary">Equipo</p>
+          <h1 className="text-h2 text-ink">Directorio de managers</h1>
+          <p className="mt-1 text-body-sm text-ink-muted">
+            Todos los responsables de locales y los equipos que tienen a cargo.
           </p>
         </div>
         <Link href="/dashboard/equipo?rol=MANAGER">
-          <Button variant="primary">Crear manager</Button>
+          <Button variant="primary">Añadir manager</Button>
         </Link>
       </div>
 
       {managers.length === 0 ? (
-        <Card className="bg-canvas-soft text-center text-[15px] text-ink-muted">
+        <Card className="bg-canvas-soft text-center text-body-sm text-ink-muted">
           Todavía no has creado ningún manager.
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {managers.map((manager) => (
-            <Link key={manager.id} href={`/dashboard/managers/${manager.id}`}>
-              <Card elevated className="flex h-full flex-col gap-2">
-                <span className="text-[18px] font-semibold text-ink">
-                  {manager.nombre}
-                </span>
-                <span className="text-[14px] text-ink-muted">
-                  {manager.email}
-                </span>
-                <Badge className="mt-2 w-fit">
-                  {manager._count.empleados} trabajador
-                  {manager._count.empleados === 1 ? "" : "es"}
-                </Badge>
-              </Card>
-            </Link>
-          ))}
+        <div className="overflow-x-auto rounded-xl border border-hairline bg-surface shadow-sm">
+          <table className="w-full min-w-160 text-left">
+            <thead>
+              <tr className="border-b border-hairline bg-canvas-soft">
+                <th className="px-6 py-4 text-label-caps uppercase text-ink-muted">
+                  Manager
+                </th>
+                <th className="px-6 py-4 text-label-caps uppercase text-ink-muted">
+                  Locales asignados
+                </th>
+                <th className="px-6 py-4 text-label-caps uppercase text-ink-muted">
+                  Trabajadores
+                </th>
+                <th className="px-6 py-4 text-right text-label-caps uppercase text-ink-muted">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-hairline">
+              {managers.map((manager) => (
+                <tr
+                  key={manager.id}
+                  className="transition-colors hover:bg-canvas-soft/50"
+                >
+                  <td className="px-6 py-4">
+                    <Link
+                      href={`/dashboard/managers/${manager.id}`}
+                      className="group flex items-center gap-3"
+                    >
+                      <Avatar nombre={manager.nombre} size="md" />
+                      <div className="flex flex-col">
+                        <span className="font-medium text-ink group-hover:text-primary">
+                          {manager.nombre}
+                        </span>
+                        <span className="text-body-sm text-ink-muted">
+                          {manager.email}
+                        </span>
+                      </div>
+                    </Link>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center gap-1.5 text-body-sm text-ink-secondary">
+                      <Store size={16} className="shrink-0 text-ink-faint" />
+                      {manager.localesComoManager.length > 0
+                        ? manager.localesComoManager
+                            .map((local) => local.nombre)
+                            .join(", ")
+                        : "—"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center gap-1.5 text-body-sm text-ink-secondary">
+                      <Users size={16} className="text-ink-faint" />
+                      {manager._count.empleados}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-4">
+                      <Link
+                        href={`/dashboard/managers/${manager.id}`}
+                        className="text-body-sm font-semibold text-primary hover:underline"
+                      >
+                        Ver perfil
+                      </Link>
+                      <a
+                        href={`mailto:${manager.email}`}
+                        className="text-body-sm font-semibold text-primary hover:underline"
+                      >
+                        Email
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
