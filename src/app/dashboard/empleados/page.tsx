@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarClock } from "lucide-react";
+import { ArrowLeft, CalendarClock, UserPlus } from "lucide-react";
 import type { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Avatar } from "@/shared/ui/avatar";
+import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 
 /** Horas entre dos "HH:MM"; asume el mismo día (fin > inicio). */
@@ -92,6 +93,12 @@ export default async function EmpleadosPage() {
               : "Los empleados que tienes a cargo, con su disponibilidad y próximo turno."}
           </p>
         </div>
+        <Link href="/dashboard/equipo?rol=EMPLOYEE">
+          <Button variant="primary">
+            <UserPlus className="size-4" />
+            Crear trabajador
+          </Button>
+        </Link>
       </div>
 
       {filas.length === 0 ? (

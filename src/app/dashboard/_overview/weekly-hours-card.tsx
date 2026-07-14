@@ -7,16 +7,21 @@ export function WeeklyHoursCard() {
     <Card interactive className="md:col-span-8">
       <div className="mb-8 flex items-center justify-between">
         <h3 className="text-title-md text-ink">Resumen de horas semanales</h3>
+        {/* Toggle de la maqueta de Stitch: aún no filtra nada. Bloqueado. */}
         <div className="flex gap-2">
           <button
             type="button"
-            className="rounded-md border border-hairline px-3 py-1 text-xs font-bold text-ink-muted transition-colors hover:bg-canvas-soft"
+            disabled
+            title="Próximamente"
+            className="rounded-md border border-hairline px-3 py-1 text-xs font-bold text-ink-muted transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             MES
           </button>
           <button
             type="button"
-            className="rounded-md bg-primary px-3 py-1 text-xs font-bold text-primary-foreground"
+            disabled
+            title="Próximamente"
+            className="rounded-md bg-primary px-3 py-1 text-xs font-bold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             SEMANA
           </button>

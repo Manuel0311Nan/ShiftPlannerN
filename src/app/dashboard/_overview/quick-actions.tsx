@@ -1,6 +1,32 @@
-import Link from "next/link";
 import { CalendarPlus, RefreshCw } from "lucide-react";
 import { Card } from "@/shared/ui/card";
+
+/**
+ * Acción de la maqueta de Stitch cuya vista/funcionalidad aún no existe.
+ * Se muestra bloqueada con distintivo "Próximamente" en vez de enlazar a nada.
+ */
+function AccionPendiente({
+  icon: Icon,
+  label,
+}: {
+  icon: typeof RefreshCw;
+  label: string;
+}) {
+  return (
+    <div
+      aria-disabled
+      className="flex items-center justify-between rounded-lg border border-hairline p-3 opacity-60"
+    >
+      <span className="flex items-center gap-2">
+        <Icon className="size-4 text-ink-faint" />
+        <span className="text-body-sm text-ink-muted">{label}</span>
+      </span>
+      <span className="rounded-full bg-canvas-soft px-2 py-0.5 text-[10px] font-bold text-ink-faint">
+        Próximamente
+      </span>
+    </div>
+  );
+}
 
 export function QuickActions() {
   return (
@@ -8,25 +34,8 @@ export function QuickActions() {
       <Card>
         <h3 className="mb-4 text-title-md text-ink">Acciones rápidas</h3>
         <div className="space-y-3">
-          <Link
-            href="/dashboard/horarios"
-            className="group flex items-center justify-between rounded-lg border border-hairline p-3 transition-all hover:border-primary"
-          >
-            <span className="flex items-center gap-2">
-              <RefreshCw className="size-4 text-primary" />
-              <span className="text-body-sm text-ink">Cambios pendientes</span>
-            </span>
-            <span className="rounded-full bg-destructive/10 px-2 py-[2px] text-[10px] font-bold text-destructive">
-              3
-            </span>
-          </Link>
-          <Link
-            href="/dashboard/horarios"
-            className="flex items-center gap-2 rounded-lg border border-hairline p-3 transition-all hover:border-primary"
-          >
-            <CalendarPlus className="size-4 text-primary" />
-            <span className="text-body-sm text-ink">Solicitar ausencia</span>
-          </Link>
+          <AccionPendiente icon={RefreshCw} label="Cambios pendientes" />
+          <AccionPendiente icon={CalendarPlus} label="Solicitar ausencia" />
         </div>
       </Card>
 
