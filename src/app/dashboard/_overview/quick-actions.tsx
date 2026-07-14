@@ -15,13 +15,13 @@ function AccionPendiente({
   return (
     <div
       aria-disabled
-      className="flex items-center justify-between rounded-lg border border-hairline p-3 opacity-60"
+      className="flex items-center justify-between gap-2 rounded-lg border border-hairline p-3 opacity-60"
     >
-      <span className="flex items-center gap-2">
-        <Icon className="size-4 text-ink-faint" />
-        <span className="text-body-sm text-ink-muted">{label}</span>
+      <span className="flex min-w-0 items-center gap-2">
+        <Icon className="size-4 shrink-0 text-ink-faint" />
+        <span className="truncate text-body-sm text-ink-muted">{label}</span>
       </span>
-      <span className="rounded-full bg-canvas-soft px-2 py-0.5 text-[10px] font-bold text-ink-faint">
+      <span className="shrink-0 whitespace-nowrap rounded-full bg-canvas-soft px-2 py-0.5 text-[10px] font-bold text-ink-faint">
         Próximamente
       </span>
     </div>

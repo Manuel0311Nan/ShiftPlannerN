@@ -68,29 +68,60 @@ export function GenerateForm({
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
-      {state.condicionesIncumplidas && state.condicionesIncumplidas.length > 0 && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
-          <p className="font-medium text-destructive">
-            No se pudo generar el horario: no se pueden cumplir las condiciones.
+      {state.parcial && (
+        <div className="rounded-md border border-accent-orange/40 bg-accent-orange-soft p-3 text-sm">
+          <p className="font-medium text-accent-orange-deep">
+            Horario generado parcialmente
+            {typeof state.turnosCreados === "number" && (
+              <>
+                : se colocaron {state.turnosCreados} turno
+                {state.turnosCreados === 1 ? "" : "s"}
+              </>
+            )}
+            .
           </p>
-          <ul className="mt-1 list-disc pl-5 text-ink-secondary">
-            {state.condicionesIncumplidas.map((condicion, i) => {
-              const tipo = TIPO_TURNO_LABEL[condicion.tipo].toLowerCase();
-              return (
-                <li key={i}>
-                  {condicion.usuarioNombre}: faltan {condicion.faltan} {tipo}
-                  {condicion.faltan === 1 ? "" : "s"}
-                </li>
-              );
-            })}
-          </ul>
-          <p className="mt-1 text-xs text-ink-faint">
-            Ajusta las condiciones o la disponibilidad del trabajador y vuelve a intentarlo.
+
+          {state.condicionesIncumplidas && state.condicionesIncumplidas.length > 0 && (
+            <>
+              <p className="mt-2 text-ink-secondary">
+                Estas condiciones no se pudieron cubrir automáticamente —
+                complétalas a mano en el calendario:
+              </p>
+              <ul className="mt-1 list-disc pl-5 text-ink-secondary">
+                {state.condicionesIncumplidas.map((condicion, i) => {
+                  const tipo = TIPO_TURNO_LABEL[condicion.tipo].toLowerCase();
+                  return (
+                    <li key={i}>
+                      {condicion.usuarioNombre}: {condicion.faltan} {tipo}
+                      {condicion.faltan === 1 ? "" : "s"} sin asignar
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+
+          {state.huecos && state.huecos.length > 0 && (
+            <p className="mt-2 text-ink-secondary">
+              Además faltó cobertura en:{" "}
+              {state.huecos
+                .map((hueco) => `${hueco.dia} ${hueco.nombre} (${hueco.faltan})`)
+                .join(", ")}
+              .
+            </p>
+          )}
+
+          <p className="mt-2 text-xs text-ink-faint">
+            Para cubrirlas automáticamente en la próxima generación: amplía la
+            disponibilidad del trabajador en los días/horas de ese tipo, baja el
+            mínimo exigido en sus condiciones, o añade bloques de ese tipo al
+            horario del local. (Apertura = primer bloque del día; cierre =
+            último; partido = dos bloques el mismo día.)
           </p>
         </div>
       )}
 
-      {state.generado && (
+      {state.generado && !state.parcial && (
         <p className="text-sm text-accent-green">
           {state.turnosCreados} turno{state.turnosCreados === 1 ? "" : "s"} generado
           {state.turnosCreados === 1 ? "" : "s"}.

@@ -14,6 +14,7 @@ import { YalpsScheduleSolver } from "@/domains/scheduling/infrastructure/yalps-s
 export type GenerateScheduleFormState = {
   error?: string;
   generado?: boolean;
+  parcial?: boolean;
   turnosCreados?: number;
   huecos?: HuecoReporte[];
   condicionesIncumplidas?: CondicionIncumplida[];
@@ -49,11 +50,13 @@ export async function generateScheduleAction(
     return { error: result.error.message };
   }
 
-  if (result.value.generado) {
+  // parcial también persiste (borra + crea lo posible), así que hay que refrescar.
+  if (result.value.generado || result.value.parcial) {
     revalidatePath("/dashboard/horarios");
   }
   return {
     generado: result.value.generado,
+    parcial: result.value.parcial,
     turnosCreados: result.value.turnosCreados,
     huecos: result.value.huecos,
     condicionesIncumplidas: result.value.condicionesIncumplidas,
