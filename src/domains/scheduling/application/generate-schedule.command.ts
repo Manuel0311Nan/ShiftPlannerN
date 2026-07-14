@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { calcularFechasBloque } from "@/domains/scheduling/domain/generar-asignaciones";
+import {
+  calcularFechasBloque,
+  type BloqueRequerido,
+} from "@/domains/scheduling/domain/generar-asignaciones";
 import {
   construirModelo,
   construirModeloElastico,
@@ -42,6 +45,8 @@ export type CondicionIncumplida = {
 
 export type GenerateScheduleResult = {
   generado: boolean;
+  /** true si se generó lo posible pero quedaron condiciones sin cubrir. */
+  parcial: boolean;
   turnosCreados: number;
   huecos: HuecoReporte[];
   condicionesIncumplidas: CondicionIncumplida[];
@@ -73,15 +78,29 @@ export class GenerateScheduleCommand {
     const bloques = await this.repo.bloquesDeLocal(input.localId);
     const empleados = await this.repo.empleadosParaOptimizacion(input.localId);
 
+    const bloquePorId = new Map(bloques.map((b) => [b.id, b]));
+    const mapearHuecos = (
+      huecos: { bloqueId: string; faltan: number }[],
+    ): HuecoReporte[] =>
+      huecos.map((hueco) => {
+        const bloque = bloquePorId.get(hueco.bloqueId)!;
+        return { dia: bloque.diaSemana, nombre: bloque.nombre, faltan: hueco.faltan };
+      });
+
     const { modelo, meta } = construirModelo({ bloques, empleados });
     const solucion = this.solver.resolver(modelo);
 
-    // Ante infactibilidad de las condiciones duras: diagnosticar con el modelo
-    // elástico (mínimos blandos) y reportar el déficit sin persistir nada.
+    // Ante infactibilidad de las condiciones duras: en vez de abortar, generamos
+    // lo que sí es posible con el modelo elástico (mínimos blandos) y reportamos
+    // qué condiciones quedan por cubrir a mano. La única fuente de infactibilidad
+    // son los mínimos por tipo, así que el elástico da la mejor precarga posible.
     if (solucion.status !== "optimal") {
       const elastico = construirModeloElastico({ bloques, empleados });
       const diagnostico = this.solver.resolver(elastico.modelo);
-      const { deficits } = interpretarSolucion(diagnostico, elastico.meta);
+      const { asignaciones, huecos, deficits } = interpretarSolucion(
+        diagnostico,
+        elastico.meta,
+      );
       const nombrePorId = new Map(empleados.map((e) => [e.id, e.nombre]));
       const condicionesIncumplidas: CondicionIncumplida[] = deficits.map(
         (deficit) => ({
@@ -90,37 +109,42 @@ export class GenerateScheduleCommand {
           faltan: deficit.faltan,
         }),
       );
+
+      const turnosCreados = await this.persistir(input, asignaciones, bloquePorId);
       return ok({
-        generado: false,
-        turnosCreados: 0,
-        huecos: [],
+        generado: turnosCreados > 0,
+        parcial: true,
+        turnosCreados,
+        huecos: mapearHuecos(huecos),
         condicionesIncumplidas,
       });
     }
 
     const { asignaciones, huecos } = interpretarSolucion(solucion, meta);
+    const turnosCreados = await this.persistir(input, asignaciones, bloquePorId);
 
+    return ok({
+      generado: true,
+      parcial: false,
+      turnosCreados,
+      huecos: mapearHuecos(huecos),
+      condicionesIncumplidas: [],
+    });
+  }
+
+  /** Reemplaza los turnos generados de la semana por las asignaciones dadas. */
+  private async persistir(
+    input: GenerateScheduleInput,
+    asignaciones: { usuarioId: string; bloqueId: string }[],
+    bloquePorId: Map<string, BloqueRequerido>,
+  ): Promise<number> {
     await this.repo.borrarTurnosGenerados(input.localId, input.semanaInicio);
-
-    const bloquePorId = new Map(bloques.map((b) => [b.id, b]));
     const turnos = asignaciones.map((asignacion) => {
       const bloque = bloquePorId.get(asignacion.bloqueId)!;
       const { inicio, fin } = calcularFechasBloque(input.semanaInicio, bloque);
       return { usuarioId: asignacion.usuarioId, inicio, fin };
     });
-
     await this.repo.crearTurnos(turnos);
-
-    const huecosReporte: HuecoReporte[] = huecos.map((hueco) => {
-      const bloque = bloquePorId.get(hueco.bloqueId)!;
-      return { dia: bloque.diaSemana, nombre: bloque.nombre, faltan: hueco.faltan };
-    });
-
-    return ok({
-      generado: true,
-      turnosCreados: turnos.length,
-      huecos: huecosReporte,
-      condicionesIncumplidas: [],
-    });
+    return turnos.length;
   }
 }

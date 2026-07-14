@@ -74,7 +74,10 @@ describe("GenerateScheduleCommand (motor ILP)", () => {
     expect(repo.turnosCreados.length).toBeGreaterThan(0);
   });
 
-  it("execute_CondicionImposible_NoPersisteYReportaIncumplidas", async () => {
+  it("execute_CondicionImposible_PrecargaLoPosibleYReportaIncumplidas", async () => {
+    // Beto solo está disponible por la mañana, así que puede cubrir aperturas
+    // pero nunca los 2 cierres exigidos: se genera lo posible (precarga) y se
+    // reporta el déficit de cierres para completarlo a mano.
     const beto: EmpleadoParaOptimizacion = {
       id: "beto",
       nombre: "Beto",
@@ -87,13 +90,15 @@ describe("GenerateScheduleCommand (motor ILP)", () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.value.generado).toBe(false);
+      expect(result.value.parcial).toBe(true);
+      expect(result.value.generado).toBe(true);
+      expect(result.value.turnosCreados).toBeGreaterThan(0);
       expect(result.value.condicionesIncumplidas).toEqual([
         { usuarioNombre: "Beto", tipo: "CIERRE", faltan: 2 },
       ]);
     }
-    expect(repo.borradoLlamado).toBe(false);
-    expect(repo.turnosCreados).toEqual([]);
+    expect(repo.borradoLlamado).toBe(true);
+    expect(repo.turnosCreados.length).toBeGreaterThan(0);
   });
 
   it("execute_ManagerDeOtroLocal_NoAutorizado", async () => {
