@@ -27,6 +27,11 @@ export const generateScheduleInputSchema = z.object({
       const [year, month, day] = value.split("-").map(Number);
       return new Date(year, month - 1, day);
     }),
+  // El checkbox llega como "on" (marcado) o ausente; lo normalizamos a boolean.
+  permitirHorasExtra: z
+    .union([z.literal("on"), z.boolean()])
+    .optional()
+    .transform((value) => value === true || value === "on"),
 });
 
 export type GenerateScheduleInput = z.infer<typeof generateScheduleInputSchema>;
@@ -42,6 +47,7 @@ export type CondicionIncumplida = {
   tipo: TipoTurno;
   faltan: number;
 };
+export type HorasIncumplidas = { usuarioNombre: string; faltan: number };
 
 export type GenerateScheduleResult = {
   generado: boolean;
@@ -50,6 +56,8 @@ export type GenerateScheduleResult = {
   turnosCreados: number;
   huecos: HuecoReporte[];
   condicionesIncumplidas: CondicionIncumplida[];
+  /** Trabajadores que no alcanzan sus horas de contrato, con las horas que faltan. */
+  horasIncumplidas: HorasIncumplidas[];
 };
 
 export class GenerateScheduleCommand {
@@ -87,25 +95,38 @@ export class GenerateScheduleCommand {
         return { dia: bloque.diaSemana, nombre: bloque.nombre, faltan: hueco.faltan };
       });
 
-    const { modelo, meta } = construirModelo({ bloques, empleados });
+    const { modelo, meta } = construirModelo({
+      bloques,
+      empleados,
+      permitirHorasExtra: input.permitirHorasExtra,
+    });
     const solucion = this.solver.resolver(modelo);
+
+    const nombrePorId = new Map(empleados.map((e) => [e.id, e.nombre]));
 
     // Ante infactibilidad de las condiciones duras: en vez de abortar, generamos
     // lo que sí es posible con el modelo elástico (mínimos blandos) y reportamos
     // qué condiciones quedan por cubrir a mano. La única fuente de infactibilidad
     // son los mínimos por tipo, así que el elástico da la mejor precarga posible.
     if (solucion.status !== "optimal") {
-      const elastico = construirModeloElastico({ bloques, empleados });
+      const elastico = construirModeloElastico({
+        bloques,
+        empleados,
+        permitirHorasExtra: input.permitirHorasExtra,
+      });
       const diagnostico = this.solver.resolver(elastico.modelo);
-      const { asignaciones, huecos, deficits } = interpretarSolucion(
-        diagnostico,
-        elastico.meta,
-      );
-      const nombrePorId = new Map(empleados.map((e) => [e.id, e.nombre]));
+      const { asignaciones, huecos, deficits, horasDeficits } =
+        interpretarSolucion(diagnostico, elastico.meta);
       const condicionesIncumplidas: CondicionIncumplida[] = deficits.map(
         (deficit) => ({
           usuarioNombre: nombrePorId.get(deficit.usuarioId) ?? "",
           tipo: deficit.tipo,
+          faltan: deficit.faltan,
+        }),
+      );
+      const horasIncumplidas: HorasIncumplidas[] = horasDeficits.map(
+        (deficit) => ({
+          usuarioNombre: nombrePorId.get(deficit.usuarioId) ?? "",
           faltan: deficit.faltan,
         }),
       );
@@ -117,6 +138,7 @@ export class GenerateScheduleCommand {
         turnosCreados,
         huecos: mapearHuecos(huecos),
         condicionesIncumplidas,
+        horasIncumplidas,
       });
     }
 
@@ -129,6 +151,7 @@ export class GenerateScheduleCommand {
       turnosCreados,
       huecos: mapearHuecos(huecos),
       condicionesIncumplidas: [],
+      horasIncumplidas: [],
     });
   }
 

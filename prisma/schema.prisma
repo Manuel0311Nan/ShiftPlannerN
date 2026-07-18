@@ -52,6 +52,7 @@ model Usuario {
   emailVerified            DateTime?
   image                    String?
   rol                      Rol              @default(EMPLOYEE)
+  horasContrato            Int              @default(40)
   empresaId                String
   empresa                  Empresa          @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   managerId                String?

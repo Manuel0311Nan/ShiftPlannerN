@@ -8,6 +8,7 @@ import {
   type DisponibilidadEmpleado,
 } from "@/domains/scheduling/domain/generar-asignaciones";
 import { rolesPorDia, type RolesDia } from "@/domains/scheduling/domain/tipos-turno";
+import { MAX_HORAS_SEMANALES } from "@/domains/employees/domain/horas-contrato";
 import type {
   ModeloILP,
   Restriccion,
@@ -18,26 +19,40 @@ export type EmpleadoOptimizacion = {
   id: string;
   disponibilidad: DisponibilidadEmpleado[];
   condiciones: { tipo: TipoTurno; minimo: number }[];
+  /** Horas semanales contratadas: mínimo a cumplir y tope salvo horas extra. */
+  horasContrato: number;
 };
 
 type MetaAsignacion = { variable: string; usuarioId: string; bloqueId: string };
 type MetaSlack = { variable: string; usuarioId: string; tipo: TipoTurno };
+type MetaHorasSlack = { variable: string; usuarioId: string };
 
 export type MetaModelo = {
   asignaciones: MetaAsignacion[];
   bloques: { id: string; personasRequeridas: number }[];
   slacks: MetaSlack[];
+  horasSlacks: MetaHorasSlack[];
 };
 
 const OBJ = "obj";
 const HVAR = "H";
 const PESO_COBERTURA = 1000;
 const PESO_DEFICIT = 1_000_000;
+const PESO_DEFICIT_HORAS = 1_000_000;
 
 const xVar = (usuarioId: string, bloqueId: string) => `x__${usuarioId}__${bloqueId}`;
 const pVar = (usuarioId: string, dia: DiaSemana) => `p__${usuarioId}__${dia}`;
 const covCon = (bloqueId: string) => `cov__${bloqueId}`;
 const minCon = (usuarioId: string, tipo: TipoTurno) => `min__${usuarioId}__${tipo}`;
+const capCon = (usuarioId: string) => `cap__${usuarioId}`;
+const hminCon = (usuarioId: string) => `hmin__${usuarioId}`;
+
+/** Tope de horas semanales del trabajador: contrato, o el máximo legal con extra. */
+function topeHoras(horasContrato: number, permitirHorasExtra: boolean): number {
+  return permitirHorasExtra
+    ? MAX_HORAS_SEMANALES
+    : Math.min(horasContrato, MAX_HORAS_SEMANALES);
+}
 
 function agruparPorDia(bloques: BloqueRequerido[]): Map<DiaSemana, BloqueRequerido[]> {
   const porDia = new Map<DiaSemana, BloqueRequerido[]>();
@@ -67,6 +82,7 @@ function construir(
   bloques: BloqueRequerido[],
   empleados: EmpleadoOptimizacion[],
   elastico: boolean,
+  permitirHorasExtra: boolean,
 ): { modelo: ModeloILP; meta: MetaModelo } {
   const variables: Record<string, Record<string, number>> = {};
   const restricciones: Record<string, Restriccion> = {};
@@ -74,6 +90,7 @@ function construir(
   const enteras: string[] = [];
   const asignaciones: MetaAsignacion[] = [];
   const slacks: MetaSlack[] = [];
+  const horasSlacks: MetaHorasSlack[] = [];
 
   const roles = rolesPorDia(bloques);
   const disponibles = new Map<string, BloqueRequerido[]>();
@@ -147,6 +164,33 @@ function construir(
     }
   }
 
+  // Horas por trabajador: tope duro (Σ dur·x ≤ tope) y mínimo de contrato
+  // (Σ dur·x ≥ horasContrato). El mínimo es duro en el modelo normal y blando
+  // (con slack penalizado) en el elástico, para reportar horas sin cubrir en
+  // vez de abortar cuando no hay demanda/disponibilidad suficiente.
+  for (const e of empleados) {
+    const bs = disponibles.get(e.id) ?? [];
+    const cap = topeHoras(e.horasContrato, permitirHorasExtra);
+    const cn = capCon(e.id);
+    restricciones[cn] = { max: cap };
+    for (const b of bs) {
+      const v = variables[xVar(e.id, b.id)];
+      v[cn] = (v[cn] ?? 0) + duracionHoras(b);
+    }
+
+    const hn = hminCon(e.id);
+    restricciones[hn] = { min: e.horasContrato };
+    for (const b of bs) {
+      const v = variables[xVar(e.id, b.id)];
+      v[hn] = (v[hn] ?? 0) + duracionHoras(b);
+    }
+    if (elastico) {
+      const s = `hslack__${e.id}`;
+      variables[s] = { [OBJ]: -PESO_DEFICIT_HORAS, [hn]: 1 };
+      horasSlacks.push({ variable: s, usuarioId: e.id });
+    }
+  }
+
   // Equidad (objetivo secundario): minimizar la carga máxima H (horas_w ≤ H).
   variables[HVAR] = { [OBJ]: -1 };
   for (const e of empleados) {
@@ -175,6 +219,7 @@ function construir(
         personasRequeridas: b.personasRequeridas,
       })),
       slacks,
+      horasSlacks,
     },
   };
 }
@@ -182,15 +227,27 @@ function construir(
 export function construirModelo(input: {
   bloques: BloqueRequerido[];
   empleados: EmpleadoOptimizacion[];
+  permitirHorasExtra?: boolean;
 }): { modelo: ModeloILP; meta: MetaModelo } {
-  return construir(input.bloques, input.empleados, false);
+  return construir(
+    input.bloques,
+    input.empleados,
+    false,
+    input.permitirHorasExtra ?? false,
+  );
 }
 
 export function construirModeloElastico(input: {
   bloques: BloqueRequerido[];
   empleados: EmpleadoOptimizacion[];
+  permitirHorasExtra?: boolean;
 }): { modelo: ModeloILP; meta: MetaModelo } {
-  return construir(input.bloques, input.empleados, true);
+  return construir(
+    input.bloques,
+    input.empleados,
+    true,
+    input.permitirHorasExtra ?? false,
+  );
 }
 
 export function interpretarSolucion(
@@ -200,6 +257,7 @@ export function interpretarSolucion(
   asignaciones: { usuarioId: string; bloqueId: string }[];
   huecos: { bloqueId: string; faltan: number }[];
   deficits: { usuarioId: string; tipo: TipoTurno; faltan: number }[];
+  horasDeficits: { usuarioId: string; faltan: number }[];
 } {
   const asignaciones = meta.asignaciones
     .filter((a) => (solucion.variables.get(a.variable) ?? 0) >= 0.5)
@@ -225,5 +283,14 @@ export function interpretarSolucion(
     }))
     .filter((d) => d.faltan > 0);
 
-  return { asignaciones, huecos, deficits };
+  const horasDeficits = meta.horasSlacks
+    .map((s) => ({
+      usuarioId: s.usuarioId,
+      // Redondeo a media hora: el slack es continuo y el solver puede dejar
+      // restos de coma flotante ínfimos que no deben aparecer como déficit.
+      faltan: Math.round((solucion.variables.get(s.variable) ?? 0) * 2) / 2,
+    }))
+    .filter((d) => d.faltan > 0);
+
+  return { asignaciones, huecos, deficits, horasDeficits };
 }

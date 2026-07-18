@@ -32,6 +32,7 @@ export async function updateUserAction(
     disponibilidad: disponibilidadRaw
       ? JSON.parse(String(disponibilidadRaw))
       : undefined,
+    horasContrato: formData.get("horasContrato") || undefined,
   });
   if (!parsed.success) {
     return { error: "Revisa los datos del formulario" };

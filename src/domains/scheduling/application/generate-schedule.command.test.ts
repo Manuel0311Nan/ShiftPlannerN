@@ -51,7 +51,11 @@ class FakeRepo implements GenerateScheduleRepository {
 }
 
 const ADMIN: GenerateScheduleContext = { invitadoPorId: "admin", invitadoPorRol: "ADMIN" };
-const input = { localId: "local-1", semanaInicio: new Date(2026, 0, 5) };
+const input = {
+  localId: "local-1",
+  semanaInicio: new Date(2026, 0, 5),
+  permitirHorasExtra: false,
+};
 
 describe("GenerateScheduleCommand (motor ILP)", () => {
   it("execute_CondicionesFactibles_GeneraYPersiste", async () => {
@@ -60,6 +64,8 @@ describe("GenerateScheduleCommand (motor ILP)", () => {
       nombre: "Ana",
       disponibilidad: DIAS.map((dia) => ({ diaSemana: dia, horaInicio: "00:00", horaFin: "23:59" })),
       condiciones: [{ tipo: "CIERRE", minimo: 2 }],
+      // 10h = 2 cierres; contrato y condición de cierre encajan sin conflicto.
+      horasContrato: 10,
     };
     const repo = new FakeRepo(semana(), [ana]);
 
@@ -83,6 +89,8 @@ describe("GenerateScheduleCommand (motor ILP)", () => {
       nombre: "Beto",
       disponibilidad: DIAS.map((dia) => ({ diaSemana: dia, horaInicio: "08:00", horaFin: "15:00" })),
       condiciones: [{ tipo: "CIERRE", minimo: 2 }],
+      // 5h = 1 mañana; el déficit reportado es solo el de cierres.
+      horasContrato: 5,
     };
     const repo = new FakeRepo(semana(), [beto]);
 

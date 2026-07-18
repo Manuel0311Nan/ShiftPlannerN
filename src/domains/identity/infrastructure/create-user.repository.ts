@@ -35,6 +35,7 @@ export class PrismaCreateUserRepository implements CreateUserRepository {
     localId: string | null;
     disponibilidad: BloqueDisponibilidad[];
     condiciones: CondicionTrabajador[];
+    horasContrato: number;
   }): Promise<{ usuarioId: string }> {
     return prisma.$transaction(async (tx) => {
       const usuario = await tx.usuario.create({
@@ -46,6 +47,7 @@ export class PrismaCreateUserRepository implements CreateUserRepository {
           empresaId: this.empresaId,
           managerId: input.managerId,
           localId: input.rol === "EMPLOYEE" ? input.localId : null,
+          horasContrato: input.horasContrato,
         },
         select: { id: true },
       });

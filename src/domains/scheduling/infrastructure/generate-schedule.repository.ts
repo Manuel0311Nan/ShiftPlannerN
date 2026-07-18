@@ -62,6 +62,7 @@ export class PrismaGenerateScheduleRepository
     return empleados.map((empleado) => ({
       id: empleado.id,
       nombre: empleado.nombre,
+      horasContrato: empleado.horasContrato,
       disponibilidad: empleado.disponibilidad.map((bloque) => ({
         diaSemana: bloque.diaSemana as DiaSemana,
         horaInicio: bloque.horaInicio,

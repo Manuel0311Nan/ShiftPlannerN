@@ -13,6 +13,10 @@ import {
   crearCondiciones,
   type CondicionTrabajador,
 } from "@/domains/employees/domain/condiciones-trabajador";
+import {
+  crearHorasContrato,
+  MAX_HORAS_SEMANALES,
+} from "@/domains/employees/domain/horas-contrato";
 
 export type NuevoUsuarioRol = "MANAGER" | "EMPLOYEE";
 
@@ -52,6 +56,7 @@ export class AltaUsuario {
     readonly localId: string | null,
     readonly disponibilidad: BloqueDisponibilidad[],
     readonly condiciones: CondicionTrabajador[],
+    readonly horasContrato: number,
   ) {}
 
   static create(props: {
@@ -66,6 +71,7 @@ export class AltaUsuario {
     localId?: string | null;
     disponibilidad?: BloqueDisponibilidadInput[];
     condiciones?: CondicionInput[];
+    horasContrato?: number;
   }): Result<AltaUsuario> {
     const email = props.email.trim().toLowerCase();
     if (!EMAIL_REGEX.test(email)) {
@@ -106,6 +112,7 @@ export class AltaUsuario {
     let localId: string | null = null;
     let disponibilidad: BloqueDisponibilidad[] = [];
     let condiciones: CondicionTrabajador[] = [];
+    let horasContrato = MAX_HORAS_SEMANALES;
 
     if (props.rol === "MANAGER") {
       const nombreLocal = (props.localNombre ?? "").trim();
@@ -169,6 +176,12 @@ export class AltaUsuario {
       const condicionesResult = crearCondiciones(props.condiciones ?? []);
       if (!condicionesResult.success) return condicionesResult;
       condiciones = condicionesResult.value;
+
+      const horasResult = crearHorasContrato(
+        props.horasContrato ?? MAX_HORAS_SEMANALES,
+      );
+      if (!horasResult.success) return horasResult;
+      horasContrato = horasResult.value;
     }
 
     return ok(
@@ -183,6 +196,7 @@ export class AltaUsuario {
         localId,
         disponibilidad,
         condiciones,
+        horasContrato,
       ),
     );
   }

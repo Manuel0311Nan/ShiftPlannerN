@@ -36,6 +36,7 @@ export function EditEmployeeForm({
   initialManagerId,
   initialLocalId,
   disponibilidadIniciales,
+  initialHorasContrato,
 }: {
   usuarioId: string;
   viewerRol: "ADMIN" | "MANAGER";
@@ -45,6 +46,7 @@ export function EditEmployeeForm({
   initialManagerId: string;
   initialLocalId: string;
   disponibilidadIniciales: BloqueDisponibilidad[];
+  initialHorasContrato: number;
 }) {
   const [state, formAction, pending] = useActionState(updateUserAction, {});
   const [managerId, setManagerId] = useState(initialManagerId);
@@ -122,6 +124,24 @@ export function EditEmployeeForm({
           </Select>
         </div>
       )}
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="horasContrato">Horas de contrato (semanales)</Label>
+        <Input
+          id="horasContrato"
+          name="horasContrato"
+          type="number"
+          min={1}
+          max={40}
+          required
+          defaultValue={initialHorasContrato}
+          className="w-32"
+        />
+        <p className="text-[13px] text-ink-faint">
+          Mínimo que el horario intenta cumplir y tope de horas asignadas
+          (máximo legal 40h).
+        </p>
+      </div>
 
       <DisponibilidadEditor bloquesIniciales={disponibilidadIniciales} />
 

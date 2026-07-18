@@ -37,6 +37,8 @@ describe("YalpsScheduleSolver (integración con el modelo)", () => {
         { tipo: "APERTURA", minimo: 1 },
         { tipo: "PARTIDO", minimo: 1 },
       ],
+      // 30h = las 6 franjas de la semana; da margen de sobra a las condiciones.
+      horasContrato: 30,
     };
 
     const { modelo, meta } = construirModelo({ bloques, empleados: [ana] });
@@ -60,6 +62,8 @@ describe("YalpsScheduleSolver (integración con el modelo)", () => {
       id: "beto",
       disponibilidad: DIAS.map((dia) => ({ diaSemana: dia, horaInicio: "08:00", horaFin: "15:00" })),
       condiciones: [{ tipo: "CIERRE", minimo: 2 }],
+      // 15h = las 3 mañanas; la única infactibilidad viene del CIERRE.
+      horasContrato: 15,
     };
 
     const duro = construirModelo({ bloques, empleados: [beto] });

@@ -35,6 +35,7 @@ export const createUserInputSchema = z.object({
   localId: z.string().optional(),
   disponibilidad: z.array(bloqueDisponibilidadSchema).optional(),
   condiciones: z.array(condicionSchema).optional(),
+  horasContrato: z.coerce.number().int().optional(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserInputSchema>;
@@ -67,6 +68,7 @@ export class CreateUserCommand {
       localId: input.localId,
       disponibilidad: input.disponibilidad,
       condiciones: input.condiciones,
+      horasContrato: input.horasContrato,
     });
     if (!altaResult.success) return altaResult;
     const alta = altaResult.value;
@@ -127,6 +129,7 @@ export class CreateUserCommand {
       localId: resolvedLocalId,
       disponibilidad: alta.disponibilidad,
       condiciones: alta.condiciones,
+      horasContrato: alta.horasContrato,
     });
 
     try {
