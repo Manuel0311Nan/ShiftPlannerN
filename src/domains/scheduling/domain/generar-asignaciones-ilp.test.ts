@@ -21,6 +21,8 @@ const ana: EmpleadoOptimizacion = {
   id: "ana",
   disponibilidad: [{ diaSemana: "LUNES", horaInicio: "00:00", horaFin: "23:59" }],
   condiciones: [{ tipo: "CIERRE", minimo: 1 }],
+  horasContrato: 5,
+  diasLibres: 0,
 };
 
 describe("construirModelo", () => {
@@ -40,6 +42,8 @@ describe("construirModelo", () => {
       id: "beto",
       disponibilidad: [{ diaSemana: "LUNES", horaInicio: "08:00", horaFin: "15:00" }],
       condiciones: [],
+      horasContrato: 5,
+      diasLibres: 0,
     };
     const { modelo } = construirModelo({ bloques: [bloque], empleados: [soloManana] });
     expect(modelo.variables["x__beto__L_t"]).toBeUndefined();
@@ -70,6 +74,8 @@ describe("interpretarSolucion", () => {
       id: "beto",
       disponibilidad: [{ diaSemana: "LUNES", horaInicio: "08:00", horaFin: "15:00" }],
       condiciones: [{ tipo: "CIERRE", minimo: 2 }],
+      horasContrato: 5,
+      diasLibres: 0,
     };
     const { meta } = construirModeloElastico({ bloques: [bloque], empleados: [soloManana] });
     const solucion: SolucionILP = {
@@ -78,5 +84,36 @@ describe("interpretarSolucion", () => {
     };
     const { deficits } = interpretarSolucion(solucion, meta);
     expect(deficits).toEqual([{ usuarioId: "beto", tipo: "CIERRE", faltan: 2 }]);
+  });
+
+  it("interpretarSolucion_HorasSlackConValor_ReportaHorasDeficit", () => {
+    const { meta } = construirModeloElastico({ bloques: [bloque], empleados: [ana] });
+    const solucion: SolucionILP = {
+      status: "optimal",
+      variables: new Map([["hslack__ana", 3.5]]),
+    };
+    const { horasDeficits } = interpretarSolucion(solucion, meta);
+    expect(horasDeficits).toEqual([{ usuarioId: "ana", faltan: 3.5 }]);
+  });
+});
+
+describe("Restricciones de horas", () => {
+  it("construirModelo_SinExtra_TopeIgualAHorasContrato", () => {
+    const empleado: EmpleadoOptimizacion = { ...ana, horasContrato: 20 };
+    const { modelo } = construirModelo({ bloques: [bloque], empleados: [empleado] });
+    expect(modelo.restricciones["cap__ana"]).toEqual({ max: 20 });
+    expect(modelo.restricciones["hmin__ana"]).toEqual({ min: 20 });
+  });
+
+  it("construirModelo_ConExtra_TopeSubeAlMaximoLegal", () => {
+    const empleado: EmpleadoOptimizacion = { ...ana, horasContrato: 20 };
+    const { modelo } = construirModelo({
+      bloques: [bloque],
+      empleados: [empleado],
+      permitirHorasExtra: true,
+    });
+    expect(modelo.restricciones["cap__ana"]).toEqual({ max: 40 });
+    // El mínimo sigue siendo el contrato; las extra suben el tope, no el mínimo.
+    expect(modelo.restricciones["hmin__ana"]).toEqual({ min: 20 });
   });
 });

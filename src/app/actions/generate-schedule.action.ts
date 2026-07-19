@@ -6,6 +6,7 @@ import {
   GenerateScheduleCommand,
   generateScheduleInputSchema,
   type CondicionIncumplida,
+  type HorasIncumplidas,
   type HuecoReporte,
 } from "@/domains/scheduling/application/generate-schedule.command";
 import { PrismaGenerateScheduleRepository } from "@/domains/scheduling/infrastructure/generate-schedule.repository";
@@ -18,6 +19,7 @@ export type GenerateScheduleFormState = {
   turnosCreados?: number;
   huecos?: HuecoReporte[];
   condicionesIncumplidas?: CondicionIncumplida[];
+  horasIncumplidas?: HorasIncumplidas[];
 };
 
 export async function generateScheduleAction(
@@ -32,6 +34,7 @@ export async function generateScheduleAction(
   const parsed = generateScheduleInputSchema.safeParse({
     localId: formData.get("localId"),
     semanaInicio: formData.get("semanaInicio"),
+    permitirHorasExtra: formData.get("permitirHorasExtra") ?? undefined,
   });
   if (!parsed.success) {
     return { error: "Selecciona un local y una semana válidos" };
@@ -60,5 +63,6 @@ export async function generateScheduleAction(
     turnosCreados: result.value.turnosCreados,
     huecos: result.value.huecos,
     condicionesIncumplidas: result.value.condicionesIncumplidas,
+    horasIncumplidas: result.value.horasIncumplidas,
   };
 }

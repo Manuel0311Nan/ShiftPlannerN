@@ -1,5 +1,6 @@
 import {
   Calendar,
+  CalendarSync,
   CreditCard,
   UserPlus,
   UserCog,
@@ -44,6 +45,14 @@ export const DASHBOARD_MENU: DashboardMenuItem[] = [
     description: "Crea cuentas para managers o empleados de tu empresa.",
     icon: UserPlus,
     roles: ["ADMIN", "MANAGER"],
+  },
+  {
+    href: "/dashboard/solicitudes",
+    label: "Solicitudes",
+    description:
+      "Cambios de disponibilidad por semana: pídelos (trabajador) o resuélvelos (manager).",
+    icon: CalendarSync,
+    roles: ["ADMIN", "MANAGER", "EMPLOYEE"],
   },
   {
     href: "/dashboard/plan",

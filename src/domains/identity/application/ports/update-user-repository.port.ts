@@ -21,6 +21,8 @@ export interface UpdateUserRepository {
     managerId: string | null;
     localId: string | null;
     disponibilidad: BloqueDisponibilidad[] | null;
+    horasContrato: number | null;
+    diasLibres: number | null;
   }): Promise<void>;
   eliminar(id: string): Promise<void>;
 }

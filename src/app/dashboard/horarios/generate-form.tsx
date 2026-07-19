@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { generateScheduleAction } from "@/app/actions/generate-schedule.action";
 import { TIPO_TURNO_LABEL } from "@/shared/kernel/tipo-turno";
 import { Button } from "@/shared/ui/button";
@@ -26,6 +27,19 @@ export function GenerateForm({
   semana: string;
 }) {
   const [state, formAction, pending] = useActionState(generateScheduleAction, {});
+  const [horasExtra, setHorasExtra] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Cambiar de local navega (?localId=…) para que el tablero de abajo y el
+  // resto de la página reflejen el local elegido, no solo el destino de la
+  // generación. Sin esto, el board se queda en el primer local siempre.
+  function cambiarLocal(nuevoLocalId: string | null) {
+    if (!nuevoLocalId) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("localId", nuevoLocalId);
+    router.push(`?${params.toString()}`);
+  }
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
@@ -33,9 +47,13 @@ export function GenerateForm({
         {locales.length > 1 ? (
           <div className="flex flex-col gap-1">
             <Label htmlFor="localId">Local</Label>
-            <Select name="localId" defaultValue={localId}>
+            <Select name="localId" value={localId} onValueChange={cambiarLocal}>
               <SelectTrigger id="localId">
-                <SelectValue />
+                <SelectValue>
+                  {(value: string) =>
+                    locales.find((local) => local.id === value)?.nombre
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {locales.map((local) => (
@@ -65,6 +83,17 @@ export function GenerateForm({
           {pending ? "Generando…" : "Generar horario"}
         </Button>
       </div>
+
+      <label className="flex items-center gap-2 text-body-sm text-ink-secondary">
+        <input
+          type="checkbox"
+          name="permitirHorasExtra"
+          checked={horasExtra}
+          onChange={(e) => setHorasExtra(e.target.checked)}
+          className="size-4 rounded border-hairline text-primary focus:ring-ring"
+        />
+        Permitir horas extra (subir el tope de cada trabajador hasta 40h)
+      </label>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
@@ -101,13 +130,40 @@ export function GenerateForm({
             </>
           )}
 
+          {state.horasIncumplidas && state.horasIncumplidas.length > 0 && (
+            <>
+              <p className="mt-2 text-ink-secondary">
+                Estos trabajadores no llegan a sus horas de contrato (no hay
+                suficiente demanda o disponibilidad):
+              </p>
+              <ul className="mt-1 list-disc pl-5 text-ink-secondary">
+                {state.horasIncumplidas.map((h, i) => (
+                  <li key={i}>
+                    {h.usuarioNombre}: faltan {h.faltan}h
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
           {state.huecos && state.huecos.length > 0 && (
             <p className="mt-2 text-ink-secondary">
               Además faltó cobertura en:{" "}
               {state.huecos
-                .map((hueco) => `${hueco.dia} ${hueco.nombre} (${hueco.faltan})`)
+                .map(
+                  (hueco) =>
+                    `${hueco.dia} ${hueco.nombre} ${hueco.horaInicio}–${hueco.horaFin} (faltan ${hueco.faltan})`,
+                )
                 .join(", ")}
               .
+            </p>
+          )}
+
+          {state.huecos && state.huecos.length > 0 && !horasExtra && (
+            <p className="mt-2 font-medium text-accent-orange-deep">
+              ¿Faltan horas por cubrir en el local? Marca “Permitir horas extra”
+              y vuelve a generar para repartir esas franjas entre los contratos
+              por debajo de 40h.
             </p>
           )}
 
@@ -122,18 +178,30 @@ export function GenerateForm({
       )}
 
       {state.generado && !state.parcial && (
-        <p className="text-sm text-accent-green">
-          {state.turnosCreados} turno{state.turnosCreados === 1 ? "" : "s"} generado
-          {state.turnosCreados === 1 ? "" : "s"}.
-          {state.huecos && state.huecos.length > 0 && (
-            <>
-              {" "}Faltó cobertura en: {state.huecos
-                .map((hueco) => `${hueco.dia} ${hueco.nombre} (${hueco.faltan})`)
-                .join(", ")}
-              .
-            </>
+        <div className="flex flex-col gap-1.5">
+          <p className="text-sm text-accent-green">
+            {state.turnosCreados} turno{state.turnosCreados === 1 ? "" : "s"} generado
+            {state.turnosCreados === 1 ? "" : "s"}.
+            {state.huecos && state.huecos.length > 0 && (
+              <>
+                {" "}Faltó cobertura en: {state.huecos
+                  .map(
+                    (hueco) =>
+                      `${hueco.dia} ${hueco.nombre} ${hueco.horaInicio}–${hueco.horaFin} (faltan ${hueco.faltan})`,
+                  )
+                  .join(", ")}
+                .
+              </>
+            )}
+          </p>
+          {state.huecos && state.huecos.length > 0 && !horasExtra && (
+            <p className="text-sm font-medium text-accent-orange-deep">
+              ¿Faltan horas por cubrir en el local? Marca “Permitir horas extra”
+              y vuelve a generar para repartir esas franjas entre los contratos
+              por debajo de 40h.
+            </p>
           )}
-        </p>
+        </div>
       )}
     </form>
   );

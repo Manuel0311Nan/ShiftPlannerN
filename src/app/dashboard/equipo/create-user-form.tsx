@@ -156,6 +156,41 @@ export function CreateUserForm({
       {rol === "MANAGER" && <PlantillaEditor />}
       {rol === "EMPLOYEE" && (
         <>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="horasContrato">Horas de contrato (semanales)</Label>
+            <Input
+              id="horasContrato"
+              name="horasContrato"
+              type="number"
+              min={1}
+              max={40}
+              defaultValue={40}
+              required
+              className="w-32"
+            />
+            <p className="text-body-sm text-ink-muted">
+              Mínimo que el horario intenta cumplir y tope de horas asignadas
+              (máximo legal 40h). Las horas extra al generar suben el tope hasta
+              40h.
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="diasLibres">Días de libranza (por semana)</Label>
+            <Input
+              id="diasLibres"
+              name="diasLibres"
+              type="number"
+              min={0}
+              max={6}
+              defaultValue={0}
+              required
+              className="w-32"
+            />
+            <p className="text-body-sm text-ink-muted">
+              Días que el trabajador libra obligatoriamente cada semana. El
+              horario nunca le asignará turnos en más de 7 − estos días.
+            </p>
+          </div>
           <DisponibilidadEditor />
           <CondicionesEditor />
         </>

@@ -41,6 +41,8 @@ export default async function EmpleadoDetailPage({
       email: true,
       managerId: true,
       localId: true,
+      horasContrato: true,
+      diasLibres: true,
       manager: { select: { nombre: true } },
       local: { select: { nombre: true } },
       disponibilidad: {
@@ -146,11 +148,11 @@ export default async function EmpleadoDetailPage({
           icon={Clock}
         />
         <StatCard
-          label="Bloques"
-          valor={empleado.disponibilidad.length}
-          unidad="franjas"
+          label="Horas de contrato"
+          valor={empleado.horasContrato}
+          unidad="h / semana"
           tono="warning"
-          icon={CalendarClock}
+          icon={Clock}
         />
       </div>
 
@@ -184,6 +186,8 @@ export default async function EmpleadoDetailPage({
             initialManagerId={empleado.managerId ?? ""}
             initialLocalId={empleado.localId ?? ""}
             disponibilidadIniciales={disponibilidadIniciales}
+            initialHorasContrato={empleado.horasContrato}
+            initialDiasLibres={empleado.diasLibres}
           />
         </Card>
       </div>

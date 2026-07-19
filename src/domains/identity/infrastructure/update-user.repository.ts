@@ -48,6 +48,8 @@ export class PrismaUpdateUserRepository implements UpdateUserRepository {
     managerId: string | null;
     localId: string | null;
     disponibilidad: BloqueDisponibilidad[] | null;
+    horasContrato: number | null;
+    diasLibres: number | null;
   }): Promise<void> {
     await prisma.$transaction(async (tx) => {
       await tx.usuario.update({
@@ -57,6 +59,12 @@ export class PrismaUpdateUserRepository implements UpdateUserRepository {
           email: input.email,
           managerId: input.managerId,
           localId: input.localId,
+          ...(input.horasContrato !== null
+            ? { horasContrato: input.horasContrato }
+            : {}),
+          ...(input.diasLibres !== null
+            ? { diasLibres: input.diasLibres }
+            : {}),
         },
       });
 
