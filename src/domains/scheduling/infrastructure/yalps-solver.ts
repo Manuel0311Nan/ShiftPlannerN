@@ -10,6 +10,14 @@ import type {
  * Adaptador del puerto `ScheduleSolver` sobre `yalps` (ILP en JS puro). Único
  * punto que conoce la librería; traduce el modelo neutro y su resultado.
  */
+/**
+ * Tope de tiempo (ms) para el branch-and-bound. Un ILP con muchas binarias
+ * (trabajadores × bloques × días) puede crecer mucho; sin tope, `solve` podría
+ * no terminar y dejar la generación colgada. Al superarlo, yalps devuelve
+ * `status: "timedout"` y lo propagamos como error controlado.
+ */
+const SOLVER_TIMEOUT_MS = 10_000;
+
 export class YalpsScheduleSolver implements ScheduleSolver {
   resolver(modelo: ModeloILP): SolucionILP {
     const model: Model = {
@@ -21,14 +29,16 @@ export class YalpsScheduleSolver implements ScheduleSolver {
       binaries: modelo.binarias,
     };
 
-    const solucion = solve(model);
+    const solucion = solve(model, { timeout: SOLVER_TIMEOUT_MS });
 
     const status: EstadoSolucion =
       solucion.status === "optimal"
         ? "optimal"
         : solucion.status === "infeasible"
           ? "infeasible"
-          : "otro";
+          : solucion.status === "timedout"
+            ? "timedout"
+            : "otro";
 
     return { status, variables: new Map(solucion.variables) };
   }
