@@ -205,8 +205,12 @@ function construir(
   for (const e of empleados) {
     if (e.diasLibres <= 0) continue;
     const porDia = agruparPorDia(disponibles.get(e.id) ?? []);
+    const tope = DIAS_POR_SEMANA - e.diasLibres;
+    // Si solo puede trabajar en `tope` días o menos, la restricción nunca
+    // muerde: no añadimos sus binarias (menos coste para el solver).
+    if (porDia.size <= tope) continue;
     const dn = diasCon(e.id);
-    restricciones[dn] = { max: DIAS_POR_SEMANA - e.diasLibres };
+    restricciones[dn] = { max: tope };
     for (const [dia, bs] of porDia) {
       const d = dVar(e.id, dia);
       variables[d] = { [dn]: 1 };

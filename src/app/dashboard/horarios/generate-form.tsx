@@ -95,7 +95,22 @@ export function GenerateForm({
         Permitir horas extra (subir el tope de cada trabajador hasta 40h)
       </label>
 
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state.error && (
+        <p className="whitespace-pre-line text-sm text-red-600">{state.error}</p>
+      )}
+
+      {state.aproximado && (
+        <div className="rounded-md border border-accent-orange/40 bg-accent-orange-soft p-3 text-sm text-accent-orange-deep">
+          <p className="font-medium">Horario generado en modo rápido</p>
+          <p className="mt-1 text-ink-secondary">
+            El optimizador exacto tardaba demasiado (modelo muy grande o muy
+            restringido), así que se usó un método rápido que respeta
+            disponibilidad, horas y días de libranza, pero puede no repartir de
+            forma óptima ni cumplir todos los mínimos por tipo. Revisa el horario
+            y ajústalo a mano si hace falta.
+          </p>
+        </div>
+      )}
 
       {state.parcial && (
         <div className="rounded-md border border-accent-orange/40 bg-accent-orange-soft p-3 text-sm">

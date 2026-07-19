@@ -17,7 +17,7 @@ export type ModeloILP = {
   enteras: string[];
 };
 
-export type EstadoSolucion = "optimal" | "infeasible" | "otro";
+export type EstadoSolucion = "optimal" | "infeasible" | "timedout" | "otro";
 
 export type SolucionILP = {
   status: EstadoSolucion;

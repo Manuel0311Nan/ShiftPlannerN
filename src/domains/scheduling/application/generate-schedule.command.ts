@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   calcularFechasBloque,
+  minutos as minutosDeHora,
   type BloqueRequerido,
 } from "@/domains/scheduling/domain/generar-asignaciones";
 import {
@@ -8,10 +9,14 @@ import {
   construirModeloElastico,
   interpretarSolucion,
 } from "@/domains/scheduling/domain/generar-asignaciones-ilp";
+import { generarAsignacionesFallback } from "@/domains/scheduling/domain/generar-asignaciones-fallback";
 import type { Rol } from "@/domains/identity/domain/usuario.entity";
 import type { TipoTurno } from "@/shared/kernel/tipo-turno";
 import { DomainError, fail, ok, type Result } from "@/shared/kernel/result";
-import type { GenerateScheduleRepository } from "@/domains/scheduling/application/ports/generate-schedule-repository.port";
+import type {
+  EmpleadoParaOptimizacion,
+  GenerateScheduleRepository,
+} from "@/domains/scheduling/application/ports/generate-schedule-repository.port";
 import type { ScheduleSolver } from "@/domains/scheduling/application/ports/schedule-solver.port";
 
 // No usar z.coerce.date(): un string "YYYY-MM-DD" se interpreta como
@@ -59,12 +64,24 @@ export type GenerateScheduleResult = {
   generado: boolean;
   /** true si se generó lo posible pero quedaron condiciones sin cubrir. */
   parcial: boolean;
+  /**
+   * true si el horario se generó con el heurístico de respaldo porque el
+   * optimizador exacto no resolvió a tiempo. Cumple las restricciones duras,
+   * pero puede no ser óptimo en reparto/mínimos por tipo.
+   */
+  aproximado: boolean;
   turnosCreados: number;
   huecos: HuecoReporte[];
   condicionesIncumplidas: CondicionIncumplida[];
   /** Trabajadores que no alcanzan sus horas de contrato, con las horas que faltan. */
   horasIncumplidas: HorasIncumplidas[];
 };
+
+/** Traza de diagnóstico a la consola del servidor (solo fuera de producción). */
+function log(paso: string, datos: Record<string, unknown>): void {
+  if (process.env.NODE_ENV === "production") return;
+  console.log(`[generate-schedule] ${paso}`, datos);
+}
 
 export class GenerateScheduleCommand {
   constructor(
@@ -89,11 +106,16 @@ export class GenerateScheduleCommand {
       );
     }
 
+    log("inicio", { localId: input.localId });
     const bloques = await this.repo.bloquesDeLocal(input.localId);
     const empleados = await this.repo.empleadosParaOptimizacion(
       input.localId,
       input.semanaInicio,
     );
+    log("datos cargados", {
+      bloques: bloques.length,
+      empleados: empleados.length,
+    });
 
     const bloquePorId = new Map(bloques.map((b) => [b.id, b]));
     const mapearHuecos = (
@@ -115,9 +137,23 @@ export class GenerateScheduleCommand {
       empleados,
       permitirHorasExtra: input.permitirHorasExtra,
     });
+    log("modelo construido", {
+      variables: Object.keys(modelo.variables).length,
+      binarias: modelo.binarias.length,
+      restricciones: Object.keys(modelo.restricciones).length,
+    });
+    const t0 = Date.now();
     const solucion = this.solver.resolver(modelo);
+    log("modelo resuelto", { status: solucion.status, ms: Date.now() - t0 });
 
     const nombrePorId = new Map(empleados.map((e) => [e.id, e.nombre]));
+
+    // Si el modelo exacto agota el tiempo, no reintentamos con el elástico (aún
+    // más grande): caemos directos al heurístico de respaldo, que siempre
+    // devuelve un horario rápido cumpliendo las restricciones duras.
+    if (solucion.status === "timedout") {
+      return this.generarConFallback(input, bloques, empleados, mapearHuecos, bloquePorId);
+    }
 
     // Ante infactibilidad de las condiciones duras: en vez de abortar, generamos
     // lo que sí es posible con el modelo elástico (mínimos blandos) y reportamos
@@ -129,7 +165,19 @@ export class GenerateScheduleCommand {
         empleados,
         permitirHorasExtra: input.permitirHorasExtra,
       });
+      const te = Date.now();
       const diagnostico = this.solver.resolver(elastico.modelo);
+      log("elástico resuelto", { status: diagnostico.status, ms: Date.now() - te });
+      // El elástico también puede agotar el tiempo: mismo respaldo greedy.
+      if (diagnostico.status === "timedout") {
+        return this.generarConFallback(
+          input,
+          bloques,
+          empleados,
+          mapearHuecos,
+          bloquePorId,
+        );
+      }
       const { asignaciones, huecos, deficits, horasDeficits } =
         interpretarSolucion(diagnostico, elastico.meta);
       const condicionesIncumplidas: CondicionIncumplida[] = deficits.map(
@@ -150,6 +198,7 @@ export class GenerateScheduleCommand {
       return ok({
         generado: turnosCreados > 0,
         parcial: true,
+        aproximado: false,
         turnosCreados,
         huecos: mapearHuecos(huecos),
         condicionesIncumplidas,
@@ -163,10 +212,56 @@ export class GenerateScheduleCommand {
     return ok({
       generado: true,
       parcial: false,
+      aproximado: false,
       turnosCreados,
       huecos: mapearHuecos(huecos),
       condicionesIncumplidas: [],
       horasIncumplidas: [],
+    });
+  }
+
+  /**
+   * Genera con el heurístico greedy cuando el ILP no resuelve a tiempo. Siempre
+   * devuelve un horario (cumpliendo restricciones duras) marcado `aproximado`,
+   * con los huecos y el déficit de horas de contrato que hayan quedado.
+   */
+  private async generarConFallback(
+    input: GenerateScheduleInput,
+    bloques: BloqueRequerido[],
+    empleados: EmpleadoParaOptimizacion[],
+    mapearHuecos: (h: { bloqueId: string; faltan: number }[]) => HuecoReporte[],
+    bloquePorId: Map<string, BloqueRequerido>,
+  ): Promise<Result<GenerateScheduleResult>> {
+    log("usando heurístico de respaldo", { empleados: empleados.length });
+    const { asignaciones, huecos } = generarAsignacionesFallback(
+      bloques,
+      empleados,
+      { permitirHorasExtra: input.permitirHorasExtra },
+    );
+
+    const horasPorEmpleado = new Map<string, number>();
+    for (const a of asignaciones) {
+      const bloque = bloquePorId.get(a.bloqueId)!;
+      const dur =
+        (minutosDeHora(bloque.horaFin) - minutosDeHora(bloque.horaInicio)) / 60;
+      horasPorEmpleado.set(a.usuarioId, (horasPorEmpleado.get(a.usuarioId) ?? 0) + dur);
+    }
+    const horasIncumplidas: HorasIncumplidas[] = empleados
+      .map((e) => ({
+        usuarioNombre: e.nombre,
+        faltan: e.horasContrato - (horasPorEmpleado.get(e.id) ?? 0),
+      }))
+      .filter((h) => h.faltan > 0);
+
+    const turnosCreados = await this.persistir(input, asignaciones, bloquePorId);
+    return ok({
+      generado: turnosCreados > 0,
+      parcial: huecos.length > 0 || horasIncumplidas.length > 0,
+      aproximado: true,
+      turnosCreados,
+      huecos: mapearHuecos(huecos),
+      condicionesIncumplidas: [],
+      horasIncumplidas,
     });
   }
 

@@ -12,6 +12,14 @@ import type {
   Empleado,
 } from "@/domains/scheduling/domain/generar-asignaciones";
 import { YalpsScheduleSolver } from "@/domains/scheduling/infrastructure/yalps-solver";
+import type { ScheduleSolver } from "@/domains/scheduling/application/ports/schedule-solver.port";
+
+/** Solver que siempre agota el tiempo, para forzar el heurístico de respaldo. */
+class TimeoutSolver implements ScheduleSolver {
+  resolver() {
+    return { status: "timedout" as const, variables: new Map<string, number>() };
+  }
+}
 
 // Escenarios de extremo a extremo del generador, escritos como documentación
 // ejecutable: cada test reproduce una plantilla de local + trabajadores +
@@ -353,5 +361,33 @@ describe("Generación de horarios — escenarios realistas", () => {
         .map((t) => t.inicio.getDay()),
     );
     expect(diasTrabajados.size).toBeLessThanOrEqual(3);
+  });
+
+  it("SolverAgotaTiempo_UsaHeuristicoDeRespaldo_GeneraIgualmente", async () => {
+    // Cuando el solver exacto agota el tiempo, la generación no falla: cae al
+    // heurístico greedy, marca el resultado como aproximado y crea turnos.
+    const ana: EmpleadoParaOptimizacion = {
+      id: "ana",
+      nombre: "Ana",
+      disponibilidad: todoElDia(DIAS),
+      condiciones: [],
+      horasContrato: 25,
+      diasLibres: 0,
+    };
+    const repo = new FakeRepo(plantillaDosBloques(), [ana]);
+    const result = await new GenerateScheduleCommand(
+      repo,
+      new TimeoutSolver(),
+    ).execute(
+      { localId: "local-1", semanaInicio: SEMANA, permitirHorasExtra: false },
+      ADMIN,
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.value.aproximado).toBe(true);
+      expect(result.value.turnosCreados).toBeGreaterThan(0);
+    }
+    expect(repo.turnosCreados.length).toBeGreaterThan(0);
   });
 });

@@ -16,6 +16,7 @@ export type GenerateScheduleFormState = {
   error?: string;
   generado?: boolean;
   parcial?: boolean;
+  aproximado?: boolean;
   turnosCreados?: number;
   huecos?: HuecoReporte[];
   condicionesIncumplidas?: CondicionIncumplida[];
@@ -44,25 +45,49 @@ export async function generateScheduleAction(
     new PrismaGenerateScheduleRepository(session.user.empresaId),
     new YalpsScheduleSolver(),
   );
-  const result = await command.execute(parsed.data, {
-    invitadoPorId: session.user.id,
-    invitadoPorRol: session.user.rol,
-  });
 
-  if (!result.success) {
-    return { error: result.error.message };
-  }
+  try {
+    const result = await command.execute(parsed.data, {
+      invitadoPorId: session.user.id,
+      invitadoPorRol: session.user.rol,
+    });
 
-  // parcial también persiste (borra + crea lo posible), así que hay que refrescar.
-  if (result.value.generado || result.value.parcial) {
-    revalidatePath("/dashboard/horarios");
+    if (!result.success) {
+      return { error: result.error.message };
+    }
+
+    // parcial también persiste (borra + crea lo posible), así que hay que refrescar.
+    if (result.value.generado || result.value.parcial) {
+      revalidatePath("/dashboard/horarios");
+    }
+    return {
+      generado: result.value.generado,
+      parcial: result.value.parcial,
+      aproximado: result.value.aproximado,
+      turnosCreados: result.value.turnosCreados,
+      huecos: result.value.huecos,
+      condicionesIncumplidas: result.value.condicionesIncumplidas,
+      horasIncumplidas: result.value.horasIncumplidas,
+    };
+  } catch (error) {
+    // Sin este catch, una excepción (Prisma, solver, etc.) dejaba el formulario
+    // colgado en "Generando…" sin explicar nada. El detalle real va a los logs
+    // del servidor; al usuario le damos un mensaje accionable.
+    console.error("[generate-schedule] fallo inesperado:", error);
+
+    const detalle =
+      error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    // En desarrollo devolvemos el detalle real para diagnosticar; en producción
+    // solo el mensaje genérico (no filtrar internals al usuario final).
+    const mensajeBase =
+      "No se pudo generar el horario por un error interno. Revisa que el " +
+      "local tenga bloques y trabajadores con disponibilidad, e inténtalo de nuevo.";
+
+    return {
+      error:
+        process.env.NODE_ENV === "production"
+          ? mensajeBase
+          : `${mensajeBase}\n\n[dev] ${detalle}`,
+    };
   }
-  return {
-    generado: result.value.generado,
-    parcial: result.value.parcial,
-    turnosCreados: result.value.turnosCreados,
-    huecos: result.value.huecos,
-    condicionesIncumplidas: result.value.condicionesIncumplidas,
-    horasIncumplidas: result.value.horasIncumplidas,
-  };
 }
