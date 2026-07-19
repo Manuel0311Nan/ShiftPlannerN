@@ -49,7 +49,11 @@ export function GenerateForm({
             <Label htmlFor="localId">Local</Label>
             <Select name="localId" value={localId} onValueChange={cambiarLocal}>
               <SelectTrigger id="localId">
-                <SelectValue />
+                <SelectValue>
+                  {(value: string) =>
+                    locales.find((local) => local.id === value)?.nombre
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {locales.map((local) => (
