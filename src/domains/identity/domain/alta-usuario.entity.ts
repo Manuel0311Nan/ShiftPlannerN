@@ -17,6 +17,7 @@ import {
   crearHorasContrato,
   MAX_HORAS_SEMANALES,
 } from "@/domains/employees/domain/horas-contrato";
+import { crearDiasLibres } from "@/domains/employees/domain/dias-libres";
 
 export type NuevoUsuarioRol = "MANAGER" | "EMPLOYEE";
 
@@ -57,6 +58,7 @@ export class AltaUsuario {
     readonly disponibilidad: BloqueDisponibilidad[],
     readonly condiciones: CondicionTrabajador[],
     readonly horasContrato: number,
+    readonly diasLibres: number,
   ) {}
 
   static create(props: {
@@ -72,6 +74,7 @@ export class AltaUsuario {
     disponibilidad?: BloqueDisponibilidadInput[];
     condiciones?: CondicionInput[];
     horasContrato?: number;
+    diasLibres?: number;
   }): Result<AltaUsuario> {
     const email = props.email.trim().toLowerCase();
     if (!EMAIL_REGEX.test(email)) {
@@ -113,6 +116,7 @@ export class AltaUsuario {
     let disponibilidad: BloqueDisponibilidad[] = [];
     let condiciones: CondicionTrabajador[] = [];
     let horasContrato = MAX_HORAS_SEMANALES;
+    let diasLibres = 0;
 
     if (props.rol === "MANAGER") {
       const nombreLocal = (props.localNombre ?? "").trim();
@@ -182,6 +186,10 @@ export class AltaUsuario {
       );
       if (!horasResult.success) return horasResult;
       horasContrato = horasResult.value;
+
+      const diasLibresResult = crearDiasLibres(props.diasLibres ?? 0);
+      if (!diasLibresResult.success) return diasLibresResult;
+      diasLibres = diasLibresResult.value;
     }
 
     return ok(
@@ -197,6 +205,7 @@ export class AltaUsuario {
         disponibilidad,
         condiciones,
         horasContrato,
+        diasLibres,
       ),
     );
   }

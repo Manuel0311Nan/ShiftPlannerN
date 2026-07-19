@@ -7,6 +7,8 @@ const TENANT_SCOPED_MODELS = new Set([
   "PlantillaTurno",
   "Disponibilidad",
   "CondicionTurno",
+  "SolicitudDisponibilidad",
+  "DisponibilidadSemana",
 ]);
 
 const READ_OPERATIONS = new Set([

@@ -66,6 +66,7 @@ describe("GenerateScheduleCommand (motor ILP)", () => {
       condiciones: [{ tipo: "CIERRE", minimo: 2 }],
       // 10h = 2 cierres; contrato y condición de cierre encajan sin conflicto.
       horasContrato: 10,
+      diasLibres: 0,
     };
     const repo = new FakeRepo(semana(), [ana]);
 
@@ -91,6 +92,7 @@ describe("GenerateScheduleCommand (motor ILP)", () => {
       condiciones: [{ tipo: "CIERRE", minimo: 2 }],
       // 5h = 1 mañana; el déficit reportado es solo el de cierres.
       horasContrato: 5,
+      diasLibres: 0,
     };
     const repo = new FakeRepo(semana(), [beto]);
 

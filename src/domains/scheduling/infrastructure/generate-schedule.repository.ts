@@ -54,25 +54,40 @@ export class PrismaGenerateScheduleRepository
 
   async empleadosParaOptimizacion(
     localId: string,
+    semanaInicio: Date,
   ): Promise<EmpleadoParaOptimizacion[]> {
     const empleados = await this.db.usuario.findMany({
       where: { localId, rol: "EMPLOYEE" },
-      include: { disponibilidad: true, condiciones: true },
+      include: {
+        disponibilidad: true,
+        condiciones: true,
+        // Override de disponibilidad aprobado para esta semana concreta, si hay.
+        disponibilidadSemana: { where: { semanaInicio } },
+      },
     });
-    return empleados.map((empleado) => ({
-      id: empleado.id,
-      nombre: empleado.nombre,
-      horasContrato: empleado.horasContrato,
-      disponibilidad: empleado.disponibilidad.map((bloque) => ({
-        diaSemana: bloque.diaSemana as DiaSemana,
-        horaInicio: bloque.horaInicio,
-        horaFin: bloque.horaFin,
-      })),
-      condiciones: empleado.condiciones.map((condicion) => ({
-        tipo: condicion.tipo as TipoTurno,
-        minimo: condicion.minimo,
-      })),
-    }));
+    return empleados.map((empleado) => {
+      // Si el trabajador tiene disponibilidad específica para esta semana
+      // (solicitud aceptada), esa manda sobre su disponibilidad base.
+      const fuente =
+        empleado.disponibilidadSemana.length > 0
+          ? empleado.disponibilidadSemana
+          : empleado.disponibilidad;
+      return {
+        id: empleado.id,
+        nombre: empleado.nombre,
+        horasContrato: empleado.horasContrato,
+        diasLibres: empleado.diasLibres,
+        disponibilidad: fuente.map((bloque) => ({
+          diaSemana: bloque.diaSemana as DiaSemana,
+          horaInicio: bloque.horaInicio,
+          horaFin: bloque.horaFin,
+        })),
+        condiciones: empleado.condiciones.map((condicion) => ({
+          tipo: condicion.tipo as TipoTurno,
+          minimo: condicion.minimo,
+        })),
+      };
+    });
   }
 
   async borrarTurnosGenerados(localId: string, semanaInicio: Date): Promise<void> {

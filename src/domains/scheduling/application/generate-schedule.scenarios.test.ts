@@ -124,6 +124,7 @@ describe("Generación de horarios — escenarios realistas", () => {
       disponibilidad: todoElDia(DIAS),
       condiciones: [{ tipo: "CIERRE", minimo: 2 }],
       horasContrato: 25,
+      diasLibres: 0,
     };
     const beto: EmpleadoParaOptimizacion = {
       id: "beto",
@@ -131,6 +132,7 @@ describe("Generación de horarios — escenarios realistas", () => {
       disponibilidad: todoElDia(DIAS),
       condiciones: [{ tipo: "APERTURA", minimo: 2 }],
       horasContrato: 25,
+      diasLibres: 0,
     };
 
     const { result, repo } = await generar(plantillaDosBloques(), [ana, beto]);
@@ -156,6 +158,7 @@ describe("Generación de horarios — escenarios realistas", () => {
       disponibilidad: todoElDia(DIAS),
       condiciones: [],
       horasContrato: 20,
+      diasLibres: 0,
     };
 
     const { result, repo } = await generar(plantillaDosBloques(), [ana]);
@@ -178,6 +181,7 @@ describe("Generación de horarios — escenarios realistas", () => {
       disponibilidad: todoElDia(DIAS),
       condiciones: [],
       horasContrato: 20,
+      diasLibres: 0,
     };
 
     const { result, repo } = await generar(plantillaDosBloques(), [ana], true);
@@ -210,6 +214,7 @@ describe("Generación de horarios — escenarios realistas", () => {
       disponibilidad: todoElDia(DIAS),
       condiciones: [],
       horasContrato: 20,
+      diasLibres: 0,
     };
 
     const { result } = await generar(plantillaMinima, [ana]);
@@ -238,6 +243,7 @@ describe("Generación de horarios — escenarios realistas", () => {
       })),
       condiciones: [{ tipo: "CIERRE", minimo: 2 }],
       horasContrato: 10,
+      diasLibres: 0,
     };
 
     const { result } = await generar(plantillaDosBloques(), [ana]);
@@ -260,6 +266,7 @@ describe("Generación de horarios — escenarios realistas", () => {
       disponibilidad: todoElDia(["LUNES", "MARTES"]),
       condiciones: [{ tipo: "CIERRE", minimo: 3 }],
       horasContrato: 10,
+      diasLibres: 0,
     };
 
     const { result } = await generar(plantillaDosBloques(), [ana]);
@@ -290,6 +297,7 @@ describe("Generación de horarios — escenarios realistas", () => {
       disponibilidad: todoElDia(DIAS),
       condiciones: [{ tipo: "PARTIDO", minimo: 1 }],
       horasContrato: 8,
+      diasLibres: 0,
     };
 
     const { result } = await generar(plantillaUnBloque, [ana]);
@@ -310,6 +318,7 @@ describe("Generación de horarios — escenarios realistas", () => {
       disponibilidad: todoElDia(DIAS),
       condiciones: [{ tipo: "PARTIDO", minimo: 1 }],
       horasContrato: 10,
+      diasLibres: 0,
     };
 
     const { result } = await generar(plantillaDosBloques(), [ana]);
@@ -319,5 +328,30 @@ describe("Generación de horarios — escenarios realistas", () => {
       expect(result.value.parcial).toBe(false);
       expect(result.value.condicionesIncumplidas).toEqual([]);
     }
+  });
+
+  it("DiasLibres_TopeDeDiasTrabajados_LimitaAunConHorasSinCubrir", async () => {
+    // Ana está disponible L-V (10 franjas · 5h) y su contrato de 40h daría para
+    // 4 días completos, pero con 4 días de libranza (tope 7−4 = 3 días) el motor
+    // no puede asignarle turnos en más de 3 días distintos, aunque eso deje sus
+    // horas de contrato sin cubrir del todo.
+    const ana: EmpleadoParaOptimizacion = {
+      id: "ana",
+      nombre: "Ana",
+      disponibilidad: todoElDia(DIAS),
+      condiciones: [],
+      horasContrato: 40,
+      diasLibres: 4,
+    };
+
+    const { result, repo } = await generar(plantillaDosBloques(), [ana]);
+
+    expect(result.success).toBe(true);
+    const diasTrabajados = new Set(
+      repo.turnosCreados
+        .filter((t) => t.usuarioId === "ana")
+        .map((t) => t.inicio.getDay()),
+    );
+    expect(diasTrabajados.size).toBeLessThanOrEqual(3);
   });
 });

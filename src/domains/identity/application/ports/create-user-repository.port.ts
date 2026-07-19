@@ -18,6 +18,7 @@ export interface CreateUserRepository {
     disponibilidad: BloqueDisponibilidad[];
     condiciones: CondicionTrabajador[];
     horasContrato: number;
+    diasLibres: number;
   }): Promise<{ usuarioId: string }>;
   eliminar(usuarioId: string): Promise<void>;
 }

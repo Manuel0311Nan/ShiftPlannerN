@@ -42,6 +42,7 @@ export default async function EmpleadoDetailPage({
       managerId: true,
       localId: true,
       horasContrato: true,
+      diasLibres: true,
       manager: { select: { nombre: true } },
       local: { select: { nombre: true } },
       disponibilidad: {
@@ -186,6 +187,7 @@ export default async function EmpleadoDetailPage({
             initialLocalId={empleado.localId ?? ""}
             disponibilidadIniciales={disponibilidadIniciales}
             initialHorasContrato={empleado.horasContrato}
+            initialDiasLibres={empleado.diasLibres}
           />
         </Card>
       </div>

@@ -22,6 +22,7 @@ const ana: EmpleadoOptimizacion = {
   disponibilidad: [{ diaSemana: "LUNES", horaInicio: "00:00", horaFin: "23:59" }],
   condiciones: [{ tipo: "CIERRE", minimo: 1 }],
   horasContrato: 5,
+  diasLibres: 0,
 };
 
 describe("construirModelo", () => {
@@ -42,6 +43,7 @@ describe("construirModelo", () => {
       disponibilidad: [{ diaSemana: "LUNES", horaInicio: "08:00", horaFin: "15:00" }],
       condiciones: [],
       horasContrato: 5,
+      diasLibres: 0,
     };
     const { modelo } = construirModelo({ bloques: [bloque], empleados: [soloManana] });
     expect(modelo.variables["x__beto__L_t"]).toBeUndefined();
@@ -73,6 +75,7 @@ describe("interpretarSolucion", () => {
       disponibilidad: [{ diaSemana: "LUNES", horaInicio: "08:00", horaFin: "15:00" }],
       condiciones: [{ tipo: "CIERRE", minimo: 2 }],
       horasContrato: 5,
+      diasLibres: 0,
     };
     const { meta } = construirModeloElastico({ bloques: [bloque], empleados: [soloManana] });
     const solucion: SolucionILP = {

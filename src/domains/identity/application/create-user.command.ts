@@ -36,6 +36,7 @@ export const createUserInputSchema = z.object({
   disponibilidad: z.array(bloqueDisponibilidadSchema).optional(),
   condiciones: z.array(condicionSchema).optional(),
   horasContrato: z.coerce.number().int().optional(),
+  diasLibres: z.coerce.number().int().optional(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserInputSchema>;
@@ -69,6 +70,7 @@ export class CreateUserCommand {
       disponibilidad: input.disponibilidad,
       condiciones: input.condiciones,
       horasContrato: input.horasContrato,
+      diasLibres: input.diasLibres,
     });
     if (!altaResult.success) return altaResult;
     const alta = altaResult.value;
@@ -130,6 +132,7 @@ export class CreateUserCommand {
       disponibilidad: alta.disponibilidad,
       condiciones: alta.condiciones,
       horasContrato: alta.horasContrato,
+      diasLibres: alta.diasLibres,
     });
 
     try {

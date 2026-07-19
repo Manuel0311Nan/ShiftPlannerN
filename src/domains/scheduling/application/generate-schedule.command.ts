@@ -41,7 +41,13 @@ export type GenerateScheduleContext = {
   invitadoPorRol: Rol;
 };
 
-export type HuecoReporte = { dia: string; nombre: string; faltan: number };
+export type HuecoReporte = {
+  dia: string;
+  nombre: string;
+  horaInicio: string;
+  horaFin: string;
+  faltan: number;
+};
 export type CondicionIncumplida = {
   usuarioNombre: string;
   tipo: TipoTurno;
@@ -84,7 +90,10 @@ export class GenerateScheduleCommand {
     }
 
     const bloques = await this.repo.bloquesDeLocal(input.localId);
-    const empleados = await this.repo.empleadosParaOptimizacion(input.localId);
+    const empleados = await this.repo.empleadosParaOptimizacion(
+      input.localId,
+      input.semanaInicio,
+    );
 
     const bloquePorId = new Map(bloques.map((b) => [b.id, b]));
     const mapearHuecos = (
@@ -92,7 +101,13 @@ export class GenerateScheduleCommand {
     ): HuecoReporte[] =>
       huecos.map((hueco) => {
         const bloque = bloquePorId.get(hueco.bloqueId)!;
-        return { dia: bloque.diaSemana, nombre: bloque.nombre, faltan: hueco.faltan };
+        return {
+          dia: bloque.diaSemana,
+          nombre: bloque.nombre,
+          horaInicio: bloque.horaInicio,
+          horaFin: bloque.horaFin,
+          faltan: hueco.faltan,
+        };
       });
 
     const { modelo, meta } = construirModelo({

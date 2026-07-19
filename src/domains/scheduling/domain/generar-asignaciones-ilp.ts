@@ -9,6 +9,7 @@ import {
 } from "@/domains/scheduling/domain/generar-asignaciones";
 import { rolesPorDia, type RolesDia } from "@/domains/scheduling/domain/tipos-turno";
 import { MAX_HORAS_SEMANALES } from "@/domains/employees/domain/horas-contrato";
+import { DIAS_POR_SEMANA } from "@/domains/employees/domain/dias-libres";
 import type {
   ModeloILP,
   Restriccion,
@@ -21,6 +22,8 @@ export type EmpleadoOptimizacion = {
   condiciones: { tipo: TipoTurno; minimo: number }[];
   /** Horas semanales contratadas: mínimo a cumplir y tope salvo horas extra. */
   horasContrato: number;
+  /** Días de libranza obligatorios por semana (tope duro de días trabajados). */
+  diasLibres: number;
 };
 
 type MetaAsignacion = { variable: string; usuarioId: string; bloqueId: string };
@@ -46,6 +49,8 @@ const covCon = (bloqueId: string) => `cov__${bloqueId}`;
 const minCon = (usuarioId: string, tipo: TipoTurno) => `min__${usuarioId}__${tipo}`;
 const capCon = (usuarioId: string) => `cap__${usuarioId}`;
 const hminCon = (usuarioId: string) => `hmin__${usuarioId}`;
+const dVar = (usuarioId: string, dia: DiaSemana) => `d__${usuarioId}__${dia}`;
+const diasCon = (usuarioId: string) => `dias__${usuarioId}`;
 
 /** Tope de horas semanales del trabajador: contrato, o el máximo legal con extra. */
 function topeHoras(horasContrato: number, permitirHorasExtra: boolean): number {
@@ -188,6 +193,28 @@ function construir(
       const s = `hslack__${e.id}`;
       variables[s] = { [OBJ]: -PESO_DEFICIT_HORAS, [hn]: 1 };
       horasSlacks.push({ variable: s, usuarioId: e.id });
+    }
+  }
+
+  // Días de libranza obligatorios (duro): tope de días trabajados a la semana.
+  // Por cada día con bloques disponibles, un aux binario d__w__día que se activa
+  // si el trabajador cubre algún bloque ese día (Σ_b x − n·d ≤ 0); luego se
+  // limita Σ_día d ≤ DIAS_POR_SEMANA − diasLibres. Es un tope: trabajar menos
+  // días siempre es factible, así que nunca provoca infactibilidad por sí solo
+  // (si choca con el mínimo de horas, el elástico reporta el déficit de horas).
+  for (const e of empleados) {
+    if (e.diasLibres <= 0) continue;
+    const porDia = agruparPorDia(disponibles.get(e.id) ?? []);
+    const dn = diasCon(e.id);
+    restricciones[dn] = { max: DIAS_POR_SEMANA - e.diasLibres };
+    for (const [dia, bs] of porDia) {
+      const d = dVar(e.id, dia);
+      variables[d] = { [dn]: 1 };
+      binarias.push(d);
+      const cn = `dlink__${e.id}__${dia}`;
+      restricciones[cn] = { max: 0 };
+      variables[d][cn] = -bs.length;
+      for (const b of bs) variables[xVar(e.id, b.id)][cn] = 1;
     }
   }
 

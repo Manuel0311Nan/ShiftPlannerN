@@ -150,7 +150,10 @@ export function GenerateForm({
             <p className="mt-2 text-ink-secondary">
               Además faltó cobertura en:{" "}
               {state.huecos
-                .map((hueco) => `${hueco.dia} ${hueco.nombre} (${hueco.faltan})`)
+                .map(
+                  (hueco) =>
+                    `${hueco.dia} ${hueco.nombre} ${hueco.horaInicio}–${hueco.horaFin} (faltan ${hueco.faltan})`,
+                )
                 .join(", ")}
               .
             </p>
@@ -182,7 +185,10 @@ export function GenerateForm({
             {state.huecos && state.huecos.length > 0 && (
               <>
                 {" "}Faltó cobertura en: {state.huecos
-                  .map((hueco) => `${hueco.dia} ${hueco.nombre} (${hueco.faltan})`)
+                  .map(
+                    (hueco) =>
+                      `${hueco.dia} ${hueco.nombre} ${hueco.horaInicio}–${hueco.horaFin} (faltan ${hueco.faltan})`,
+                  )
                   .join(", ")}
                 .
               </>

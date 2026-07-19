@@ -7,6 +7,7 @@ import {
   type BloqueDisponibilidad,
 } from "@/domains/employees/domain/bloque-disponibilidad";
 import { crearHorasContrato } from "@/domains/employees/domain/horas-contrato";
+import { crearDiasLibres } from "@/domains/employees/domain/dias-libres";
 import type { EmailSender } from "@/domains/identity/application/ports/email-sender.port";
 import type {
   UpdateUserRepository,
@@ -27,6 +28,7 @@ export const updateUserInputSchema = z.object({
   localId: z.string().optional(),
   disponibilidad: z.array(bloqueDisponibilidadSchema).optional(),
   horasContrato: z.coerce.number().int().optional(),
+  diasLibres: z.coerce.number().int().optional(),
 });
 
 export type UpdateUserInput = z.infer<typeof updateUserInputSchema>;
@@ -108,6 +110,7 @@ export class UpdateUserCommand {
     let localId: string | null = usuario.localId;
     let disponibilidad: BloqueDisponibilidad[] | null = null;
     let horasContrato: number | null = null;
+    let diasLibres: number | null = null;
 
     if (usuario.rol === "EMPLOYEE") {
       // Solo un ADMIN puede reasignar de manager; un MANAGER edita a los
@@ -170,6 +173,10 @@ export class UpdateUserCommand {
       const horasResult = crearHorasContrato(input.horasContrato ?? 40);
       if (!horasResult.success) return horasResult;
       horasContrato = horasResult.value;
+
+      const diasLibresResult = crearDiasLibres(input.diasLibres ?? 0);
+      if (!diasLibresResult.success) return diasLibresResult;
+      diasLibres = diasLibresResult.value;
     }
 
     await this.repo.actualizar({
@@ -180,6 +187,7 @@ export class UpdateUserCommand {
       localId,
       disponibilidad,
       horasContrato,
+      diasLibres,
     });
 
     if (email !== usuario.email) {

@@ -29,46 +29,57 @@ enum TipoTurno {
   PARTIDO
 }
 
+enum SolicitudEstado {
+  PENDIENTE
+  ACEPTADA
+  RECHAZADA
+}
+
 model Empresa {
-  id              String           @id @default(cuid())
-  nombre          String
-  configuracion   Json             @default("{}")
-  trialEndsAt     DateTime
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  usuarios        Usuario[]
-  turnos          Turno[]
-  locales         Local[]
-  plantillasTurno PlantillaTurno[]
-  disponibilidades Disponibilidad[]
-  condiciones     CondicionTurno[]
+  id                     String                    @id @default(cuid())
+  nombre                 String
+  configuracion          Json                      @default("{}")
+  trialEndsAt            DateTime
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+  usuarios               Usuario[]
+  turnos                 Turno[]
+  locales                Local[]
+  plantillasTurno        PlantillaTurno[]
+  disponibilidades       Disponibilidad[]
+  condiciones            CondicionTurno[]
+  solicitudes            SolicitudDisponibilidad[]
+  disponibilidadesSemana DisponibilidadSemana[]
 }
 
 model Usuario {
-  id                       String           @id @default(cuid())
-  email                    String           @unique
-  nombre                   String
-  passwordHash             String
-  emailVerified            DateTime?
-  image                    String?
-  rol                      Rol              @default(EMPLOYEE)
-  horasContrato            Int              @default(40)
-  empresaId                String
-  empresa                  Empresa          @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  managerId                String?
-  manager                  Usuario?         @relation("ManagerEmpleados", fields: [managerId], references: [id], onDelete: SetNull)
-  empleados                Usuario[]        @relation("ManagerEmpleados")
-  localId                  String?
-  local                    Local?           @relation("EmpleadosLocal", fields: [localId], references: [id], onDelete: SetNull)
-  localesComoManager       Local[]          @relation("LocalesManager")
-  disponibilidad           Disponibilidad[]
-  condiciones              CondicionTurno[]
-  metadata                 Json             @default("{}")
-  accounts                 Account[]
-  sessions                 Session[]
-  turnos                   Turno[]
-  createdAt                DateTime         @default(now())
-  updatedAt                DateTime         @updatedAt
+  id                   String                    @id @default(cuid())
+  email                String                    @unique
+  nombre               String
+  passwordHash         String
+  emailVerified        DateTime?
+  image                String?
+  rol                  Rol                       @default(EMPLOYEE)
+  horasContrato        Int                       @default(40)
+  diasLibres           Int                       @default(0)
+  empresaId            String
+  empresa              Empresa                   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  managerId            String?
+  manager              Usuario?                  @relation("ManagerEmpleados", fields: [managerId], references: [id], onDelete: SetNull)
+  empleados            Usuario[]                 @relation("ManagerEmpleados")
+  localId              String?
+  local                Local?                    @relation("EmpleadosLocal", fields: [localId], references: [id], onDelete: SetNull)
+  localesComoManager   Local[]                   @relation("LocalesManager")
+  disponibilidad       Disponibilidad[]
+  condiciones          CondicionTurno[]
+  solicitudes          SolicitudDisponibilidad[]
+  disponibilidadSemana DisponibilidadSemana[]
+  metadata             Json                      @default("{}")
+  accounts             Account[]
+  sessions             Session[]
+  turnos               Turno[]
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
 
   @@index([empresaId])
   @@index([managerId])
@@ -135,6 +146,51 @@ model CondicionTurno {
   @@unique([usuarioId, tipo])
   @@index([empresaId])
   @@index([usuarioId])
+}
+
+/**
+ * Solicitud de un trabajador para cambiar su disponibilidad en una semana
+ * concreta. El manager la revisa y, si la acepta, define la disponibilidad de
+ * esa semana (DisponibilidadSemana), que el motor usa al regenerar el horario.
+ */
+model SolicitudDisponibilidad {
+  id            String          @id @default(cuid())
+  empresaId     String
+  empresa       Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuarioId     String
+  usuario       Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  semanaInicio  DateTime
+  motivo        String
+  estado        SolicitudEstado @default(PENDIENTE)
+  respuesta     String?
+  resueltaPorId String?
+  resueltaAt    DateTime?
+  createdAt     DateTime        @default(now())
+
+  @@index([empresaId])
+  @@index([usuarioId])
+  @@index([empresaId, estado])
+}
+
+/**
+ * Override de disponibilidad para una semana concreta (lunes de esa semana en
+ * `semanaInicio`). Si existen filas para (usuario, semana), el motor las usa en
+ * lugar de la disponibilidad base al generar el horario de esa semana.
+ */
+model DisponibilidadSemana {
+  id           String    @id @default(cuid())
+  empresaId    String
+  empresa      Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuarioId    String
+  usuario      Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  semanaInicio DateTime
+  diaSemana    DiaSemana
+  horaInicio   String
+  horaFin      String
+  createdAt    DateTime  @default(now())
+
+  @@index([empresaId])
+  @@index([usuarioId, semanaInicio])
 }
 
 model Account {
