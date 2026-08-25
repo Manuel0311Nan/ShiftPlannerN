@@ -9,9 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Turnia — Horarios laborales automáticos",
+  title: "EonLab — El tiempo de tu equipo, bien planificado",
   description:
-    "Genera horarios laborales óptimos automáticamente: turnos, disponibilidad y restricciones legales en un solo lugar.",
+    "EonLab genera horarios laborales óptimos automáticamente: turnos, disponibilidad y restricciones legales en un solo lugar.",
 };
 
 export default function RootLayout({

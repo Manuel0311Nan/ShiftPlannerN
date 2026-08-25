@@ -44,7 +44,7 @@ export default function Home() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-hairline bg-surface/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-295 items-center justify-between px-6 md:px-8">
-          <span className="text-h3 text-primary">Turnia</span>
+          <span className="text-h3 text-primary">EonLab</span>
           <nav className="hidden items-center gap-6 md:flex">
             <a
               href="#caracteristicas"
@@ -66,9 +66,9 @@ export default function Home() {
             >
               Iniciar sesión
             </Link>
-            <Link href="/register">
-              <Button variant="utility">Prueba gratis</Button>
-            </Link>
+            <Button variant="utility" asChild>
+              <Link href="/register">Prueba gratis</Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -103,23 +103,22 @@ export default function Home() {
               Prueba gratuita de 30 días
             </span>
             <h1 className="text-[40px] font-bold leading-[1.05] tracking-tight text-white md:text-display-lg">
-              Gestiona tus turnos con la claridad de un documento.
+              El tiempo de tu equipo, planificado solo.
             </h1>
             <p className="mt-6 max-w-160 text-body-lg leading-relaxed text-white/75">
-              Turnia genera los turnos de tu empresa automáticamente,
+              EonLab genera los turnos de tu empresa automáticamente,
               respetando disponibilidad, restricciones legales y la jerarquía de
               managers y empleados.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-              <Link href="/register" className="w-full sm:w-auto">
-                <Button variant="primary" className="w-full">
-                  Empezar gratis
-                </Button>
-              </Link>
-              <Link href="/login" className="w-full sm:w-auto">
-                <button className="w-full rounded-full border border-white/30 px-6 py-3 text-base font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/10 active:scale-[0.96]">
-                  Iniciar sesión
-                </button>
+              <Button variant="primary" className="w-full sm:w-auto" asChild>
+                <Link href="/register">Empezar gratis</Link>
+              </Button>
+              <Link
+                href="/login"
+                className="inline-flex w-full items-center justify-center rounded-full border border-white/30 px-6 py-3 text-base font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/10 active:scale-[0.96] sm:w-auto"
+              >
+                Iniciar sesión
               </Link>
             </div>
           </div>
@@ -265,12 +264,12 @@ export default function Home() {
               tarjeta de crédito.
             </p>
             <div className="mt-8">
-              <Link href="/register">
-                <Button variant="primary" className="shadow-md">
+              <Button variant="primary" className="shadow-md" asChild>
+                <Link href="/register">
                   Crear mi empresa
                   <ArrowRight size={18} />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -279,9 +278,9 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-hairline bg-surface px-6 py-10 md:px-8">
         <div className="mx-auto flex max-w-295 flex-col items-center justify-between gap-4 md:flex-row">
-          <span className="text-h3 text-primary">Turnia</span>
+          <span className="text-h3 text-primary">EonLab</span>
           <span className="text-body-sm text-ink-muted">
-            © {new Date().getFullYear()} Turnia. Todos los derechos
+            © {new Date().getFullYear()} EonLab. Todos los derechos
             reservados.
           </span>
         </div>

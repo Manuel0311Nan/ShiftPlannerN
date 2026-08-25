@@ -123,19 +123,19 @@ export function TeamDiagram({
         </div>
         <div className="flex gap-2">
           {viewerRol === "ADMIN" && (
-            <Link href="/dashboard/equipo?rol=MANAGER">
-              <Button variant="utility">
+            <Button variant="utility" asChild>
+              <Link href="/dashboard/equipo?rol=MANAGER">
                 <UserPlus className="size-4" />
                 Añadir manager
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           )}
-          <Link href="/dashboard/equipo?rol=EMPLOYEE">
-            <Button variant="primary">
+          <Button variant="primary" asChild>
+            <Link href="/dashboard/equipo?rol=EMPLOYEE">
               <UserPlus className="size-4" />
               Crear trabajador
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 

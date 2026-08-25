@@ -49,9 +49,9 @@ export default async function ManagersPage() {
             Todos los responsables de locales y los equipos que tienen a cargo.
           </p>
         </div>
-        <Link href="/dashboard/equipo?rol=MANAGER">
-          <Button variant="primary">Añadir manager</Button>
-        </Link>
+        <Button variant="primary" asChild>
+          <Link href="/dashboard/equipo?rol=MANAGER">Añadir manager</Link>
+        </Button>
       </div>
 
       {managers.length === 0 ? (

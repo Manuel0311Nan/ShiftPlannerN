@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { Plus } from "lucide-react";
 import { auth } from "@/auth";
 import { Button } from "@/shared/ui/button";
-import { AttendanceCard } from "./_overview/attendance-card";
+import { GetDashboardOverviewQuery } from "@/domains/scheduling/application/get-dashboard-overview.query";
+import { PrismaDashboardOverviewRepository } from "@/domains/scheduling/infrastructure/dashboard-overview.repository";
 import { MetricsRow } from "./_overview/metrics-row";
 import { QuickActions } from "./_overview/quick-actions";
 import { TodaysShifts } from "./_overview/todays-shifts";
@@ -16,7 +18,14 @@ function saludo(fecha = new Date()): string {
 
 export default async function DashboardPage() {
   const session = await auth();
-  const nombre = session!.user.name;
+  const { name: nombre, id: usuarioId, rol, empresaId } = session!.user;
+
+  const query = new GetDashboardOverviewQuery(
+    new PrismaDashboardOverviewRepository(empresaId),
+  );
+  const overview = await query.execute({ usuarioId, rol });
+
+  const puedeCrearTurnos = rol !== "EMPLOYEE";
 
   return (
     <div>
@@ -33,24 +42,31 @@ export default async function DashboardPage() {
             Esto es lo que ocurre hoy en tu centro.
           </p>
         </div>
-        {/* Sin vista propia todavía: los turnos se crean desde el calendario
-            de Horarios. Bloqueado hasta que exista el flujo dedicado. */}
-        <Button className="shadow-md" disabled title="Próximamente">
-          <Plus className="size-4" />
-          Crear turno
-        </Button>
+        {/* Los turnos se crean sobre el calendario de Horarios, no hay vista propia. */}
+        {puedeCrearTurnos && (
+          <Button asChild className="shadow-md">
+            <Link href="/dashboard/horarios">
+              <Plus className="size-4" />
+              Crear turno
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Bento grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
-        <AttendanceCard />
-        <WeeklyHoursCard />
-        <TodaysShifts />
-        <QuickActions />
+        <WeeklyHoursCard
+          barras={overview.barrasSemana}
+          totalHoras={overview.metricas.horasProgramadas}
+        />
+        <TodaysShifts bloques={overview.bloquesHoy} />
+        <QuickActions
+          solicitudesPendientes={overview.metricas.solicitudesPendientes}
+        />
       </div>
 
       {/* Métricas */}
-      <MetricsRow />
+      <MetricsRow metricas={overview.metricas} />
     </div>
   );
 }

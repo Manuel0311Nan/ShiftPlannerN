@@ -2,20 +2,37 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/shared/ui/card";
-import { type Franja, turnosHoyPlaceholder } from "./placeholder-data";
+import type { BloqueHoy, Franja } from "@/domains/scheduling/domain/resumen-dashboard";
 
 const FRANJA_STYLES: Record<Franja, string> = {
-  morning: "border-deep-sky-blue bg-deep-sky-blue/5",
-  afternoon: "border-cool-horizon bg-cool-horizon/5",
-  night: "border-fuchsia-plum bg-fuchsia-plum/5",
+  MANANA: "border-deep-sky-blue bg-deep-sky-blue/5",
+  TARDE: "border-cool-horizon bg-cool-horizon/5",
+  NOCHE: "border-fuchsia-plum bg-fuchsia-plum/5",
 };
 
-function AvatarStack({ nombres, extra }: { nombres: string[]; extra: number }) {
+const FRANJA_LABEL: Record<Franja, string> = {
+  MANANA: "MAÑANA",
+  TARDE: "TARDE",
+  NOCHE: "NOCHE",
+};
+
+const MAX_AVATARES = 3;
+
+function AvatarStack({ nombres }: { nombres: string[] }) {
+  const visibles = nombres.slice(0, MAX_AVATARES);
+  const extra = nombres.length - visibles.length;
+
+  if (nombres.length === 0) {
+    return (
+      <span className="text-body-sm text-ink-faint">Sin asignar</span>
+    );
+  }
+
   return (
     <div className="flex -space-x-2">
-      {nombres.map((nombre) => (
+      {visibles.map((nombre, indice) => (
         <div
-          key={nombre}
+          key={`${nombre}-${indice}`}
           title={nombre}
           className="flex size-8 items-center justify-center rounded-full border-2 border-canvas bg-canvas-soft text-[11px] font-bold text-ink-muted"
         >
@@ -23,7 +40,10 @@ function AvatarStack({ nombres, extra }: { nombres: string[]; extra: number }) {
         </div>
       ))}
       {extra > 0 && (
-        <div className="flex size-8 items-center justify-center rounded-full border-2 border-canvas bg-primary/10 text-[10px] font-bold text-primary">
+        <div
+          title={nombres.slice(MAX_AVATARES).join(", ")}
+          className="flex size-8 items-center justify-center rounded-full border-2 border-canvas bg-primary/10 text-[10px] font-bold text-primary"
+        >
           +{extra}
         </div>
       )}
@@ -31,7 +51,17 @@ function AvatarStack({ nombres, extra }: { nombres: string[]; extra: number }) {
   );
 }
 
-export function TodaysShifts() {
+/** "3 de 4 cubiertos" cuando el bloque viene de la plantilla; si no, solo el conteo. */
+function textoCobertura(bloque: BloqueHoy): string {
+  if (bloque.requeridas === null) {
+    return `${bloque.asignados.length} persona${bloque.asignados.length === 1 ? "" : "s"} · fuera de plantilla`;
+  }
+  const faltan = bloque.requeridas - bloque.asignados.length;
+  const cobertura = `${bloque.asignados.length} de ${bloque.requeridas} cubiertos`;
+  return faltan > 0 ? `${cobertura} · faltan ${faltan}` : `${cobertura} · completo`;
+}
+
+export function TodaysShifts({ bloques }: { bloques: BloqueHoy[] }) {
   return (
     <Card
       interactive
@@ -47,33 +77,48 @@ export function TodaysShifts() {
         </Link>
       </div>
 
-      <div className="divide-y divide-hairline">
-        {turnosHoyPlaceholder.map((turno) => (
-          <div
-            key={turno.franja}
-            className="flex flex-col gap-6 p-6 transition-colors hover:bg-canvas-soft/50 md:flex-row md:items-center"
-          >
-            <div className="min-w-[140px]">
-              <p className="text-label-caps uppercase text-ink-muted">
-                {turno.franjaLabel}
-              </p>
-              <p className="text-h3 text-ink">{turno.horario}</p>
-            </div>
-
+      {bloques.length === 0 ? (
+        <p className="p-6 text-body-sm text-ink-muted">
+          Hoy no hay ningún turno planificado.
+        </p>
+      ) : (
+        <div className="divide-y divide-hairline">
+          {bloques.map((bloque) => (
             <div
-              className={cn(
-                "flex-1 rounded-r-lg border-l-4 py-2 pl-4",
-                FRANJA_STYLES[turno.franja],
-              )}
+              key={bloque.clave}
+              className="flex flex-col gap-6 p-6 transition-colors hover:bg-canvas-soft/50 md:flex-row md:items-center"
             >
-              <h4 className="text-title-md text-ink">{turno.unidad}</h4>
-              <p className="text-body-sm text-ink-muted">{turno.meta}</p>
-            </div>
+              <div className="min-w-[140px]">
+                <p className="text-label-caps uppercase text-ink-muted">
+                  {FRANJA_LABEL[bloque.franja]}
+                </p>
+                <p className="text-h3 text-ink">
+                  {bloque.horaInicio} - {bloque.horaFin}
+                </p>
+              </div>
 
-            <AvatarStack nombres={turno.dotados} extra={turno.extra} />
-          </div>
-        ))}
-      </div>
+              <div
+                className={cn(
+                  "flex-1 rounded-r-lg border-l-4 py-2 pl-4",
+                  FRANJA_STYLES[bloque.franja],
+                )}
+              >
+                <h4 className="text-title-md text-ink">
+                  {bloque.titulo ?? "Turno puntual"}
+                  {bloque.localNombre && (
+                    <span className="text-ink-muted"> · {bloque.localNombre}</span>
+                  )}
+                </h4>
+                <p className="text-body-sm text-ink-muted">
+                  {textoCobertura(bloque)}
+                </p>
+              </div>
+
+              <AvatarStack nombres={bloque.asignados} />
+            </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
