@@ -1,8 +1,9 @@
+import { cloneElement, isValidElement } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
+export const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 font-medium text-base transition-transform active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none",
   {
     variants: {
@@ -26,6 +27,12 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   loading?: boolean;
+  /**
+   * Renderiza el hijo (p. ej. un `<Link>`) con los estilos del botón en vez de
+   * envolverlo en un `<button>`: anidar un botón dentro de un `<a>` es HTML
+   * inválido y hace que el enlace no navegue.
+   */
+  asChild?: boolean;
 }
 
 export function Button({
@@ -33,9 +40,20 @@ export function Button({
   variant,
   loading,
   disabled,
+  asChild,
   children,
   ...props
 }: ButtonProps) {
+  if (asChild && isValidElement<{ className?: string }>(children)) {
+    return cloneElement(children, {
+      className: cn(
+        buttonVariants({ variant }),
+        className,
+        children.props.className,
+      ),
+    });
+  }
+
   return (
     <button
       className={cn(buttonVariants({ variant }), className)}

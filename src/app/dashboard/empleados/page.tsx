@@ -93,12 +93,12 @@ export default async function EmpleadosPage() {
               : "Los empleados que tienes a cargo, con su disponibilidad y próximo turno."}
           </p>
         </div>
-        <Link href="/dashboard/equipo?rol=EMPLOYEE">
-          <Button variant="primary">
+        <Button variant="primary" asChild>
+          <Link href="/dashboard/equipo?rol=EMPLOYEE">
             <UserPlus className="size-4" />
             Crear trabajador
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       {filas.length === 0 ? (

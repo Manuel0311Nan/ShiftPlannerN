@@ -66,9 +66,9 @@ export default function Home() {
             >
               Iniciar sesión
             </Link>
-            <Link href="/register">
-              <Button variant="utility">Prueba gratis</Button>
-            </Link>
+            <Button variant="utility" asChild>
+              <Link href="/register">Prueba gratis</Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -111,15 +111,14 @@ export default function Home() {
               managers y empleados.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-              <Link href="/register" className="w-full sm:w-auto">
-                <Button variant="primary" className="w-full">
-                  Empezar gratis
-                </Button>
-              </Link>
-              <Link href="/login" className="w-full sm:w-auto">
-                <button className="w-full rounded-full border border-white/30 px-6 py-3 text-base font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/10 active:scale-[0.96]">
-                  Iniciar sesión
-                </button>
+              <Button variant="primary" className="w-full sm:w-auto" asChild>
+                <Link href="/register">Empezar gratis</Link>
+              </Button>
+              <Link
+                href="/login"
+                className="inline-flex w-full items-center justify-center rounded-full border border-white/30 px-6 py-3 text-base font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/10 active:scale-[0.96] sm:w-auto"
+              >
+                Iniciar sesión
               </Link>
             </div>
           </div>
@@ -265,12 +264,12 @@ export default function Home() {
               tarjeta de crédito.
             </p>
             <div className="mt-8">
-              <Link href="/register">
-                <Button variant="primary" className="shadow-md">
+              <Button variant="primary" className="shadow-md" asChild>
+                <Link href="/register">
                   Crear mi empresa
                   <ArrowRight size={18} />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </section>

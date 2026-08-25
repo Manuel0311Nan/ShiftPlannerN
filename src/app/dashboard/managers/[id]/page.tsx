@@ -139,9 +139,13 @@ export default async function ManagerDetailPage({
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-title-md text-ink">Trabajadores</h2>
-          <Link href={`/dashboard/equipo?rol=EMPLOYEE&managerId=${manager.id}`}>
-            <Button variant="utility">Crear trabajador</Button>
-          </Link>
+          <Button variant="utility" asChild>
+            <Link
+              href={`/dashboard/equipo?rol=EMPLOYEE&managerId=${manager.id}`}
+            >
+              Crear trabajador
+            </Link>
+          </Button>
         </div>
         {empleados.length === 0 ? (
           <Card className="bg-canvas-soft text-center text-body-sm text-ink-muted">
