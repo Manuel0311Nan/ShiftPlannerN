@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CalendarPlus, RefreshCw } from "lucide-react";
 import { Card } from "@/shared/ui/card";
 
@@ -28,13 +29,29 @@ function AccionPendiente({
   );
 }
 
-export function QuickActions() {
+export function QuickActions({ solicitudesPendientes }: { solicitudesPendientes: number }) {
   return (
     <div className="space-y-6 md:col-span-12 lg:col-span-3">
       <Card>
         <h3 className="mb-4 text-title-md text-ink">Acciones rápidas</h3>
         <div className="space-y-3">
-          <AccionPendiente icon={RefreshCw} label="Cambios pendientes" />
+          <Link
+            href="/dashboard/solicitudes"
+            className="flex items-center justify-between gap-2 rounded-lg border border-hairline p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <RefreshCw className="size-4 shrink-0 text-primary" />
+              <span className="truncate text-body-sm text-ink">
+                Cambios pendientes
+              </span>
+            </span>
+            {solicitudesPendientes > 0 && (
+              <span className="shrink-0 rounded-full bg-accent-orange/15 px-2 py-0.5 text-[10px] font-bold text-accent-orange">
+                {solicitudesPendientes}
+              </span>
+            )}
+          </Link>
+          {/* Las ausencias no están modeladas: no hay `tipo` en SolicitudDisponibilidad. */}
           <AccionPendiente icon={CalendarPlus} label="Solicitar ausencia" />
         </div>
       </Card>

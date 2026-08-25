@@ -1,13 +1,38 @@
 import { cn } from "@/lib/utils";
 import { Card } from "@/shared/ui/card";
-import { horasSemanaPlaceholder } from "./placeholder-data";
+import type { BarraDia } from "@/domains/scheduling/domain/resumen-dashboard";
 
-export function WeeklyHoursCard() {
+const DIA_CORTO: Record<BarraDia["dia"], string> = {
+  LUNES: "LUN",
+  MARTES: "MAR",
+  MIERCOLES: "MIÉ",
+  JUEVES: "JUE",
+  VIERNES: "VIE",
+  SABADO: "SÁB",
+  DOMINGO: "DOM",
+};
+
+export function WeeklyHoursCard({
+  barras,
+  totalHoras,
+}: {
+  barras: BarraDia[];
+  totalHoras: number;
+}) {
+  const sinDatos = totalHoras === 0;
+
   return (
-    <Card interactive className="md:col-span-8">
+    <Card interactive className="md:col-span-12">
       <div className="mb-8 flex items-center justify-between">
-        <h3 className="text-title-md text-ink">Resumen de horas semanales</h3>
-        {/* Toggle de la maqueta de Stitch: aún no filtra nada. Bloqueado. */}
+        <div>
+          <h3 className="text-title-md text-ink">Resumen de horas semanales</h3>
+          <p className="mt-1 text-body-sm text-ink-muted">
+            {sinDatos
+              ? "Todavía no hay turnos planificados esta semana."
+              : `${totalHoras} h programadas esta semana.`}
+          </p>
+        </div>
+        {/* Toggle de la maqueta de Stitch: la vista mensual aún no existe. */}
         <div className="flex gap-2">
           <button
             type="button"
@@ -30,12 +55,14 @@ export function WeeklyHoursCard() {
 
       {/* Barras: fila con altura definida (h-48) para que height:% resuelva. */}
       <div className="flex h-48 w-full items-end gap-2 px-2">
-        {horasSemanaPlaceholder.map(({ dia, pct, activo }) => (
+        {barras.map(({ dia, horas, pct, esHoy }) => (
           <div
             key={dia}
+            title={`${DIA_CORTO[dia]}: ${horas} h`}
             className={cn(
-              "flex-1 rounded-t-lg transition-all",
-              activo ? "bg-primary/40" : "bg-primary/20",
+              // min-h para que un día con pocas horas siga siendo visible.
+              "min-h-[2px] flex-1 rounded-t-lg transition-all",
+              esHoy ? "bg-primary/40" : "bg-primary/20",
             )}
             style={{ height: `${pct}%` }}
           />
@@ -43,15 +70,15 @@ export function WeeklyHoursCard() {
       </div>
       {/* Etiquetas: fila aparte alineada con las barras por flex-1. */}
       <div className="mt-2 flex w-full gap-2 px-2">
-        {horasSemanaPlaceholder.map(({ dia, activo }) => (
+        {barras.map(({ dia, esHoy }) => (
           <span
             key={dia}
             className={cn(
               "flex-1 text-center text-label-caps uppercase",
-              activo ? "text-primary" : "text-ink-muted",
+              esHoy ? "text-primary" : "text-ink-muted",
             )}
           >
-            {dia}
+            {DIA_CORTO[dia]}
           </span>
         ))}
       </div>
