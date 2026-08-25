@@ -8,7 +8,7 @@ import {
   createUserInputSchema,
 } from "@/domains/identity/application/create-user.command";
 import { PrismaCreateUserRepository } from "@/domains/identity/infrastructure/create-user.repository";
-import { NodemailerEmailSender } from "@/domains/identity/infrastructure/nodemailer-email-sender";
+import { createEmailSender } from "@/domains/identity/infrastructure/email-sender.factory";
 
 export type CreateUserFormState = {
   error?: string;
@@ -56,7 +56,7 @@ export async function createUserAction(
 
   const command = new CreateUserCommand(
     new PrismaCreateUserRepository(session.user.empresaId),
-    new NodemailerEmailSender(),
+    createEmailSender(),
   );
 
   const result = await command.execute(parsed.data, {

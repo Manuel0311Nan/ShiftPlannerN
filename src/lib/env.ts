@@ -18,6 +18,8 @@ const envSchema = z.object({
   GMAIL_USER: z.string().email().optional(),
   GMAIL_APP_PASSWORD: z.string().min(1).optional(),
   APP_URL: z.string().url().optional(),
+  // Selector de transporte de email. "noop" no envía nada (tests e2e).
+  EMAIL_TRANSPORT: z.enum(["gmail", "resend", "noop"]).default("gmail"),
 });
 
 export const env = envSchema.parse(process.env);

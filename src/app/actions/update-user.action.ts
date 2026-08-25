@@ -8,7 +8,7 @@ import {
   updateUserInputSchema,
 } from "@/domains/identity/application/update-user.command";
 import { PrismaUpdateUserRepository } from "@/domains/identity/infrastructure/update-user.repository";
-import { NodemailerEmailSender } from "@/domains/identity/infrastructure/nodemailer-email-sender";
+import { createEmailSender } from "@/domains/identity/infrastructure/email-sender.factory";
 
 export type UpdateUserFormState = { error?: string; success?: boolean };
 
@@ -46,7 +46,7 @@ export async function updateUserAction(
 
   const command = new UpdateUserCommand(
     new PrismaUpdateUserRepository(session.user.empresaId),
-    new NodemailerEmailSender(),
+    createEmailSender(),
   );
 
   const result = await command.execute(parsed.data, {
