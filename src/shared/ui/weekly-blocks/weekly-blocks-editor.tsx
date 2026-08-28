@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { DiaSemana } from "@/shared/kernel/dia-semana";
 import { DIAS_SEMANA_OPCIONES } from "@/shared/kernel/dias-semana-labels";
 import { DayColumn } from "./day-column";
-import { minutos, seSuperponen } from "./solapamiento";
+import { horasCubiertas, minutos, seSuperponen } from "./solapamiento";
 import type { BloqueSemanal } from "./types";
 
 type NuevoBloque = Omit<BloqueSemanal, "id" | "diaSemana">;
@@ -22,15 +22,24 @@ function hayConflicto(existentes: BloqueSemanal[], candidato: NuevoBloque, exclu
   return existentes.some((b) => b.id !== excluirId && seSuperponen(b, candidato));
 }
 
+/**
+ * `permitirSolape` distingue los dos usos del editor. En la plantilla de un
+ * local los bloques pueden pisarse —así se describe un refuerzo de mediodía
+ * sobre la mañana y la tarde, y la demanda de cada franja se suma—. En la
+ * disponibilidad de un empleado no: dos tramos solapados no declaran nada que
+ * uno solo no diga ya, y solo confunden al leerlos.
+ */
 export function WeeklyBlocksEditor({
   name,
   mostrarNombre,
   mostrarPersonas,
+  permitirSolape = false,
   bloquesIniciales = [],
 }: {
   name: string;
   mostrarNombre: boolean;
   mostrarPersonas: boolean;
+  permitirSolape?: boolean;
   bloquesIniciales?: (NuevoBloque & { diaSemana: DiaSemana })[];
 }) {
   const [bloques, setBloques] = useState<BloqueSemanal[]>(
@@ -43,13 +52,14 @@ export function WeeklyBlocksEditor({
         return "La hora de fin debe ser posterior a la de inicio";
       }
     }
-    const bloquesDia = bloques.filter((b) => b.diaSemana === dia);
-    const candidatos = [...bloquesDia];
-    for (const n of nuevos) {
-      if (hayConflicto(candidatos, n)) {
-        return `El bloque se solapa con otro turno de ${diaLabel(dia)}`;
+    if (!permitirSolape) {
+      const candidatos = bloques.filter((b) => b.diaSemana === dia);
+      for (const n of nuevos) {
+        if (hayConflicto(candidatos, n)) {
+          return `El bloque se solapa con otro turno de ${diaLabel(dia)}`;
+        }
+        candidatos.push({ ...n, id: "tmp", diaSemana: dia });
       }
-      candidatos.push({ ...n, id: "tmp", diaSemana: dia });
     }
     setBloques((prev) => [...prev, ...nuevos.map((n) => ({ ...n, id: crearId(), diaSemana: dia }))]);
     return null;
@@ -61,9 +71,11 @@ export function WeeklyBlocksEditor({
     if (minutos(cambios.horaFin) <= minutos(cambios.horaInicio)) {
       return "La hora de fin debe ser posterior a la de inicio";
     }
-    const bloquesDia = bloques.filter((b) => b.diaSemana === actual.diaSemana && b.id !== id);
-    if (hayConflicto(bloquesDia, cambios, id)) {
-      return `El bloque se solapa con otro turno de ${diaLabel(actual.diaSemana)}`;
+    if (!permitirSolape) {
+      const bloquesDia = bloques.filter((b) => b.diaSemana === actual.diaSemana && b.id !== id);
+      if (hayConflicto(bloquesDia, cambios, id)) {
+        return `El bloque se solapa con otro turno de ${diaLabel(actual.diaSemana)}`;
+      }
     }
     setBloques((prev) => prev.map((b) => (b.id === id ? { ...b, ...cambios } : b)));
     return null;
@@ -74,10 +86,12 @@ export function WeeklyBlocksEditor({
   }
 
   function copiarBloqueADias(bloque: NuevoBloque, dias: DiaSemana[]): string | null {
-    for (const dia of dias) {
-      const bloquesDia = bloques.filter((b) => b.diaSemana === dia);
-      if (hayConflicto(bloquesDia, bloque)) {
-        return `El bloque se solapa con otro turno de ${diaLabel(dia)}`;
+    if (!permitirSolape) {
+      for (const dia of dias) {
+        const bloquesDia = bloques.filter((b) => b.diaSemana === dia);
+        if (hayConflicto(bloquesDia, bloque)) {
+          return `El bloque se solapa con otro turno de ${diaLabel(dia)}`;
+        }
       }
     }
     setBloques((prev) => [
@@ -97,8 +111,10 @@ export function WeeklyBlocksEditor({
     ]);
   }
 
-  const totalHoras = bloques.reduce(
-    (acc, b) => acc + (minutos(b.horaFin) - minutos(b.horaInicio)) / 60,
+  // Horas de apertura, no suma de duraciones: con bloques solapados el mismo
+  // tramo del día no debe contarse dos veces.
+  const totalHoras = DIAS_SEMANA_OPCIONES.reduce(
+    (acc, dia) => acc + horasCubiertas(bloques.filter((b) => b.diaSemana === dia.value)),
     0,
   );
   const totalPersonas = mostrarPersonas
@@ -131,6 +147,7 @@ export function WeeklyBlocksEditor({
               bloques={bloques.filter((b) => b.diaSemana === dia.value)}
               mostrarNombre={mostrarNombre}
               mostrarPersonas={mostrarPersonas}
+              permitirSolape={permitirSolape}
               onAgregar={(nuevos) => agregarBloques(dia.value, nuevos)}
               onActualizar={actualizarBloque}
               onEliminar={eliminarBloque}

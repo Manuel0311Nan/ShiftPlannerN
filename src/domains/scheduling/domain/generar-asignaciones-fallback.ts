@@ -2,7 +2,7 @@ import type { DiaSemana } from "@/shared/kernel/dia-semana";
 import { MAX_HORAS_SEMANALES } from "@/domains/employees/domain/horas-contrato";
 import { DIAS_POR_SEMANA } from "@/domains/employees/domain/dias-libres";
 import {
-  cubre,
+  cubreDisponibilidad,
   duracionHoras,
   minutos,
   seSuperponen,
@@ -62,7 +62,7 @@ export function generarAsignacionesFallback(
   for (const bloque of bloquesOrdenados) {
     const dur = duracionHoras(bloque);
     const candidatos = empleados
-      .filter((e) => e.disponibilidad.some((d) => cubre(d, bloque)))
+      .filter((e) => cubreDisponibilidad(e.disponibilidad, bloque))
       .filter((e) => !turnos.get(e.id)!.some((t) => seSuperponen(t, bloque)))
       .filter((e) => (horas.get(e.id) ?? 0) + dur <= topeHoras(e))
       .filter((e) => {

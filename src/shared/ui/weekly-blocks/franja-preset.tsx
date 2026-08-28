@@ -10,6 +10,7 @@ export const PRESETS_FRANJA: PresetFranja[] = [
       { horaInicio: "17:00", horaFin: "21:00" },
     ],
   },
+  { label: "Refuerzo mediodía", rangos: [{ horaInicio: "12:00", horaFin: "18:00" }] },
   { label: "Todo el día", rangos: [{ horaInicio: "08:00", horaFin: "22:00" }] },
 ];
 

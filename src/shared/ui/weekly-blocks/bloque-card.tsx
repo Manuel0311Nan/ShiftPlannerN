@@ -10,9 +10,14 @@ function colorFranja(horaInicio: string): string {
 
 export function BloqueCard({
   bloque,
+  solapado = false,
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & { bloque: BloqueSemanal }) {
+}: React.HTMLAttributes<HTMLDivElement> & {
+  bloque: BloqueSemanal;
+  /** Pisa a otro bloque del día: se marca como información, no como error. */
+  solapado?: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -30,6 +35,9 @@ export function BloqueCard({
         <span className="text-[11px] opacity-80">
           {bloque.personasRequeridas} {bloque.personasRequeridas === 1 ? "persona" : "personas"}
         </span>
+      )}
+      {solapado && (
+        <span className="text-[11px] opacity-70">Se suma a otro turno</span>
       )}
     </div>
   );

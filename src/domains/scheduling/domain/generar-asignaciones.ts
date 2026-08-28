@@ -1,4 +1,7 @@
 import { DIAS_SEMANA, type DiaSemana } from "@/shared/kernel/dia-semana";
+import { minutos, unionCubre } from "@/shared/kernel/intervalos";
+
+export { minutos };
 
 export type BloqueRequerido = {
   id: string;
@@ -23,23 +26,23 @@ export type Empleado = {
 export type Asignacion = { bloqueId: string; usuarioId: string };
 export type Hueco = { bloqueId: string; faltan: number };
 
-export function minutos(hora: string): number {
-  const [h, m] = hora.split(":").map(Number);
-  return h * 60 + m;
-}
-
 export function duracionHoras(bloque: { horaInicio: string; horaFin: string }): number {
   return (minutos(bloque.horaFin) - minutos(bloque.horaInicio)) / 60;
 }
 
-export function cubre(
-  disponibilidad: DisponibilidadEmpleado,
+/**
+ * ¿La disponibilidad declarada por un empleado cubre el bloque entero? Se
+ * evalúa sobre la **unión** de sus franjas de ese día, no franja a franja: con
+ * disponibilidad de 09:00-14:00 y 14:00-22:00 puede cubrir un turno de
+ * 12:00-18:00, aunque ninguna de las dos lo envuelva por separado.
+ */
+export function cubreDisponibilidad(
+  disponibilidad: DisponibilidadEmpleado[],
   bloque: { diaSemana: DiaSemana; horaInicio: string; horaFin: string },
 ): boolean {
-  return (
-    disponibilidad.diaSemana === bloque.diaSemana &&
-    minutos(disponibilidad.horaInicio) <= minutos(bloque.horaInicio) &&
-    minutos(disponibilidad.horaFin) >= minutos(bloque.horaFin)
+  return unionCubre(
+    disponibilidad.filter((d) => d.diaSemana === bloque.diaSemana),
+    bloque,
   );
 }
 
@@ -82,7 +85,7 @@ export function generarAsignaciones(
 
   for (const bloque of bloquesOrdenados) {
     const candidatos = empleados
-      .filter((empleado) => empleado.disponibilidad.some((d) => cubre(d, bloque)))
+      .filter((empleado) => cubreDisponibilidad(empleado.disponibilidad, bloque))
       .filter((empleado) => {
         const turnos = turnosPorEmpleado.get(empleado.id) ?? [];
         return !turnos.some((turno) => seSuperponen(turno, bloque));

@@ -390,4 +390,129 @@ describe("Generación de horarios — escenarios realistas", () => {
     }
     expect(repo.turnosCreados.length).toBeGreaterThan(0);
   });
+
+  it("DisponibilidadPartidaContigua_TurnoQueLaCruza_SeCubre", async () => {
+    // Ana declara su disponibilidad en dos tramos que se tocan (09:00-14:00 y
+    // 14:00-22:00): está disponible de 09:00 a 22:00 sin cortes. Un turno de
+    // 12:00 a 18:00 la cruza sin que ningún tramo suelto lo envuelva, y antes se
+    // reportaba como hueco pese a que Ana podía hacerlo perfectamente.
+    const bloque: BloqueRequerido = {
+      id: "L_refuerzo",
+      nombre: "Refuerzo",
+      diaSemana: "LUNES",
+      horaInicio: "12:00",
+      horaFin: "18:00",
+      personasRequeridas: 1,
+    };
+    const ana: EmpleadoParaOptimizacion = {
+      id: "ana",
+      nombre: "Ana",
+      disponibilidad: [
+        { diaSemana: "LUNES", horaInicio: "09:00", horaFin: "14:00" },
+        { diaSemana: "LUNES", horaInicio: "14:00", horaFin: "22:00" },
+      ],
+      condiciones: [],
+      horasContrato: 6,
+      diasLibres: 0,
+    };
+
+    const { result, repo } = await generar([bloque], [ana]);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.value.huecos).toEqual([]);
+      expect(result.value.parcial).toBe(false);
+    }
+    expect(repo.turnosCreados).toHaveLength(1);
+    expect(repo.turnosCreados[0].usuarioId).toBe("ana");
+  });
+
+  it("DisponibilidadConHuecoReal_TurnoQueLoAtraviesa_QuedaComoHueco", async () => {
+    // El contrapunto del test anterior: con un corte de verdad entre los dos
+    // tramos (14:00-16:00), el turno sigue sin poder cubrirse.
+    const bloque: BloqueRequerido = {
+      id: "L_refuerzo",
+      nombre: "Refuerzo",
+      diaSemana: "LUNES",
+      horaInicio: "12:00",
+      horaFin: "18:00",
+      personasRequeridas: 1,
+    };
+    const ana: EmpleadoParaOptimizacion = {
+      id: "ana",
+      nombre: "Ana",
+      disponibilidad: [
+        { diaSemana: "LUNES", horaInicio: "09:00", horaFin: "14:00" },
+        { diaSemana: "LUNES", horaInicio: "16:00", horaFin: "22:00" },
+      ],
+      condiciones: [],
+      horasContrato: 6,
+      diasLibres: 0,
+    };
+
+    const { result, repo } = await generar([bloque], [ana]);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.value.huecos).toEqual([
+        { dia: "LUNES", nombre: "Refuerzo", horaInicio: "12:00", horaFin: "18:00", faltan: 1 },
+      ]);
+    }
+    expect(repo.turnosCreados).toHaveLength(0);
+  });
+
+  it("TurnosSolapados_RefuerzoDeMediodia_CubreLosTresSinDuplicarPersona", async () => {
+    // La plantilla que el editor no dejaba escribir: mañana, tarde y un refuerzo
+    // que pisa a las dos. Cada bloque pide 1 persona, así que hacen falta 3
+    // trabajadores distintos: nadie puede estar en dos sitios a la vez.
+    const bloques: BloqueRequerido[] = [
+      {
+        id: "L_manana",
+        nombre: "Mañana",
+        diaSemana: "LUNES",
+        horaInicio: "09:00",
+        horaFin: "14:00",
+        personasRequeridas: 1,
+      },
+      {
+        id: "L_tarde",
+        nombre: "Tarde",
+        diaSemana: "LUNES",
+        horaInicio: "16:00",
+        horaFin: "21:00",
+        personasRequeridas: 1,
+      },
+      {
+        id: "L_refuerzo",
+        nombre: "Refuerzo",
+        diaSemana: "LUNES",
+        horaInicio: "12:00",
+        horaFin: "18:00",
+        personasRequeridas: 1,
+      },
+    ];
+    // Las horas de contrato son tope duro, así que alguien tiene que poder
+    // hacer las 6h del refuerzo: con tres contratos de 5h el horario sería
+    // infactible por el refuerzo, no por el solape.
+    const empleados: EmpleadoParaOptimizacion[] = [
+      { id: "ana", horasContrato: 5 },
+      { id: "beto", horasContrato: 5 },
+      { id: "cris", horasContrato: 6 },
+    ].map(({ id, horasContrato }) => ({
+      id,
+      nombre: id,
+      disponibilidad: [{ diaSemana: "LUNES", horaInicio: "00:00", horaFin: "23:59" }],
+      condiciones: [],
+      horasContrato,
+      diasLibres: 0,
+    }));
+
+    const { result, repo } = await generar(bloques, empleados);
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.value.huecos).toEqual([]);
+    expect(repo.turnosCreados).toHaveLength(3);
+    // Tres personas distintas: el refuerzo solapa con la mañana y con la tarde.
+    expect(new Set(repo.turnosCreados.map((t) => t.usuarioId)).size).toBe(3);
+  });
 });
