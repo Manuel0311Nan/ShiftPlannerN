@@ -10,18 +10,15 @@ import { DIAS_SEMANA_OPCIONES } from "@/shared/kernel/dias-semana-labels";
 import { BloqueCard } from "./bloque-card";
 import { BloquePopoverContent } from "./bloque-popover";
 import { AddBloquePopoverContent } from "./add-bloque-popover";
+import { horasCubiertas, idsSolapados, minutos, picoPersonas } from "./solapamiento";
 import type { BloqueSemanal } from "./types";
-
-function minutos(hora: string): number {
-  const [h, m] = hora.split(":").map(Number);
-  return h * 60 + m;
-}
 
 function BloqueItem({
   bloque,
   diaSemana,
   mostrarNombre,
   mostrarPersonas,
+  solapado,
   onActualizar,
   onEliminar,
   onCopiarADias,
@@ -30,6 +27,7 @@ function BloqueItem({
   diaSemana: DiaSemana;
   mostrarNombre: boolean;
   mostrarPersonas: boolean;
+  solapado: boolean;
   onActualizar: (bloque: BloqueSemanal) => string | null;
   onEliminar: () => void;
   onCopiarADias: (bloque: BloqueSemanal, dias: DiaSemana[]) => string | null;
@@ -38,7 +36,7 @@ function BloqueItem({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger nativeButton={false} render={<BloqueCard bloque={bloque} />} />
+      <PopoverTrigger nativeButton={false} render={<BloqueCard bloque={bloque} solapado={solapado} />} />
       <PopoverContent>
         <BloquePopoverContent
           bloque={bloque}
@@ -64,6 +62,7 @@ export function DayColumn({
   bloques,
   mostrarNombre,
   mostrarPersonas,
+  permitirSolape,
   onAgregar,
   onActualizar,
   onEliminar,
@@ -74,6 +73,7 @@ export function DayColumn({
   bloques: BloqueSemanal[];
   mostrarNombre: boolean;
   mostrarPersonas: boolean;
+  permitirSolape: boolean;
   onAgregar: (bloques: Omit<BloqueSemanal, "id" | "diaSemana">[]) => string | null;
   onActualizar: (id: string, bloque: Omit<BloqueSemanal, "id" | "diaSemana">) => string | null;
   onEliminar: (id: string) => void;
@@ -84,13 +84,15 @@ export function DayColumn({
   const [copyOpen, setCopyOpen] = useState(false);
   const [diasCopia, setDiasCopia] = useState<DiaSemana[]>([]);
 
-  const totalHoras = bloques.reduce(
-    (acc, b) => acc + (minutos(b.horaFin) - minutos(b.horaInicio)) / 60,
-    0,
+  const ordenados = [...bloques].sort(
+    (a, b) => minutos(a.horaInicio) - minutos(b.horaInicio) || minutos(a.horaFin) - minutos(b.horaFin),
   );
-  const totalPersonas = mostrarPersonas
-    ? bloques.reduce((acc, b) => acc + (b.personasRequeridas ?? 0), 0)
-    : undefined;
+  const solapados = permitirSolape ? idsSolapados(ordenados) : new Set<string>();
+
+  // Con solapes, lo que interesa del día no es la suma de duraciones sino
+  // cuánto tiempo está cubierto y cuánta gente coincide en la hora punta.
+  const totalHoras = horasCubiertas(ordenados);
+  const pico = mostrarPersonas ? picoPersonas(ordenados) : undefined;
 
   const otrosDias = DIAS_SEMANA_OPCIONES.filter((d) => d.value !== dia.value);
 
@@ -101,9 +103,7 @@ export function DayColumn({
           <p className="text-sm font-semibold text-ink">{dia.label}</p>
           <p className="text-[11px] text-ink-faint">
             {totalHoras}h
-            {totalPersonas !== undefined
-              ? ` · ${totalPersonas} ${totalPersonas === 1 ? "persona" : "personas"}`
-              : ""}
+            {pico !== undefined ? ` · pico ${pico} ${pico === 1 ? "persona" : "personas"}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -188,19 +188,20 @@ export function DayColumn({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        {bloques.map((bloque) => (
+        {ordenados.map((bloque) => (
           <BloqueItem
             key={bloque.id}
             bloque={bloque}
             diaSemana={dia.value}
             mostrarNombre={mostrarNombre}
             mostrarPersonas={mostrarPersonas}
+            solapado={solapados.has(bloque.id)}
             onActualizar={(cambios) => onActualizar(bloque.id, cambios)}
             onEliminar={() => onEliminar(bloque.id)}
             onCopiarADias={(cambios, dias) => onCopiarBloqueADias(cambios, dias)}
           />
         ))}
-        {bloques.length === 0 && <p className="text-xs text-ink-faint">Sin turnos</p>}
+        {ordenados.length === 0 && <p className="text-xs text-ink-faint">Sin turnos</p>}
       </div>
     </div>
   );

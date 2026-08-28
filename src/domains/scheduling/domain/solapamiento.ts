@@ -1,4 +1,5 @@
 import { DIAS_SEMANA, type DiaSemana } from "@/shared/kernel/dia-semana";
+import { unionCubre } from "@/shared/kernel/intervalos";
 import type { DisponibilidadEmpleado } from "@/domains/scheduling/domain/generar-asignaciones";
 
 export type Intervalo = { inicio: Date; fin: Date };
@@ -26,26 +27,18 @@ export function horaHHMM(fecha: Date): string {
   return `${h}:${m}`;
 }
 
-function minutos(hora: string): number {
-  const [h, m] = hora.split(":").map(Number);
-  return h * 60 + m;
-}
-
 /**
- * ¿La disponibilidad declarada por un empleado cubre por completo la franja
- * de un turno? Mismo día y la disponibilidad envuelve inicio/fin del turno.
+ * ¿La disponibilidad declarada por un empleado cubre por completo la franja de
+ * un turno? Se mira la **unión** de sus franjas de ese día: dos tramos
+ * contiguos (09:00-14:00 y 14:00-22:00) cubren un turno que los cruce.
  */
 export function disponibilidadCubre(
   disponibilidad: DisponibilidadEmpleado[],
   intervalo: Intervalo,
 ): boolean {
   const dia = diaSemanaDe(intervalo.inicio);
-  const inicio = minutos(horaHHMM(intervalo.inicio));
-  const fin = minutos(horaHHMM(intervalo.fin));
-  return disponibilidad.some(
-    (d) =>
-      d.diaSemana === dia &&
-      minutos(d.horaInicio) <= inicio &&
-      minutos(d.horaFin) >= fin,
+  return unionCubre(
+    disponibilidad.filter((d) => d.diaSemana === dia),
+    { horaInicio: horaHHMM(intervalo.inicio), horaFin: horaHHMM(intervalo.fin) },
   );
 }

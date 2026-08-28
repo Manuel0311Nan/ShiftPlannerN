@@ -13,13 +13,17 @@ solver es intercambiable sin tocar dominio ni use case.
 
 > Nota histórica: existió un heurístico greedy previo
 > (`domain/generar-asignaciones.ts`); de ahí se reutilizan las funciones puras
-> `cubre`, `seSuperponen`, `duracionHoras` y `calcularFechasBloque`. La
-> generación real usa el ILP.
+> `cubreDisponibilidad`, `seSuperponen`, `duracionHoras` y
+> `calcularFechasBloque`. La generación real usa el ILP. La función
+> `generarAsignaciones` de ese archivo ya no la llama nadie.
 
 Estructura del modelo (variables/restricciones principales):
 
 - `x__w__b` (binaria): trabajador `w` cubre el bloque `b`. Solo se crea para
-  pares disponibles. Recompensa cobertura en el objetivo.
+  pares disponibles. Recompensa cobertura en el objetivo. "Disponible" se
+  evalúa sobre la **unión** de las franjas del trabajador ese día
+  (`cubreDisponibilidad` → `shared/kernel/intervalos.ts`), no franja a franja:
+  quien declara 09:00-14:00 y 14:00-22:00 puede cubrir un turno de 12:00-18:00.
 - Cobertura: `Σ_w x ≤ personasRequeridas` por bloque.
 - No-solape: pares de bloques solapados del mismo día, `≤ 1`.
 - Partido: aux `p__w__día` con `2·p − Σ x ≤ 0`.
@@ -34,6 +38,22 @@ reportar qué queda por cubrir a mano (`condicionesIncumplidas`,
 
 `PlantillaTurno` define el horario semanal del local (bloques por día);
 `Disponibilidad` la del trabajador (día por día).
+
+## Bloques solapados en la plantilla (decisión tomada)
+
+Los bloques de `PlantillaTurno` **pueden solaparse**: en las horas compartidas
+la demanda de cada bloque se suma. Es la única forma de expresar un refuerzo de
+mediodía sobre una mañana y una tarde ya definidas. El motor no necesitó cambios
+—la cobertura ya era por bloque y el no-solape ya era por trabajador—; lo que se
+quitó fue el bloqueo del editor (`WeeklyBlocksEditor`, prop `permitirSolape`),
+que era la única regla que lo impedía y vivía solo en el cliente.
+
+En el editor de **disponibilidad** el solape sigue bloqueado: dos tramos
+solapados no declaran nada que uno solo no diga ya.
+
+Con solapes, las cifras del editor son de unión, no sumas: horas de cobertura
+(el tiempo solapado cuenta una vez) y pico de personas simultáneas
+(`shared/ui/weekly-blocks/solapamiento.ts`).
 
 ## Horas de contrato + tope legal (decisión tomada)
 

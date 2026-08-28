@@ -1,7 +1,7 @@
 import type { DiaSemana } from "@/shared/kernel/dia-semana";
 import type { TipoTurno } from "@/shared/kernel/tipo-turno";
 import {
-  cubre,
+  cubreDisponibilidad,
   duracionHoras,
   seSuperponen,
   type BloqueRequerido,
@@ -102,7 +102,7 @@ function construir(
 
   // Variables x__w__b (binarias) solo para pares disponibles; recompensan cobertura.
   for (const e of empleados) {
-    const bs = bloques.filter((b) => e.disponibilidad.some((d) => cubre(d, b)));
+    const bs = bloques.filter((b) => cubreDisponibilidad(e.disponibilidad, b));
     disponibles.set(e.id, bs);
     for (const b of bs) {
       const nombre = xVar(e.id, b.id);
