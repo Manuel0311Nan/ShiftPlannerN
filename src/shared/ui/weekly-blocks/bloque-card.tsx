@@ -3,9 +3,9 @@ import type { BloqueSemanal } from "./types";
 
 function colorFranja(horaInicio: string): string {
   const hora = Number(horaInicio.split(":")[0]);
-  if (hora < 12) return "border-deep-sky-blue/30 bg-deep-sky-blue-soft text-deep-sky-blue";
-  if (hora < 19) return "border-cool-horizon/30 bg-cool-horizon-soft text-cool-horizon";
-  return "border-fuchsia-plum/30 bg-fuchsia-plum-soft text-fuchsia-plum";
+  if (hora < 12) return "border-shift-morning/30 bg-shift-morning-soft text-shift-morning";
+  if (hora < 19) return "border-shift-afternoon/30 bg-shift-afternoon-soft text-shift-afternoon";
+  return "border-shift-night/30 bg-shift-night-soft text-shift-night";
 }
 
 export function BloqueCard({

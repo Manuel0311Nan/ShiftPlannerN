@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { Logo } from "@/shared/ui/logo";
 
 /* -------------------------------------------------------------------------
  * Vista previa del board de horarios.
@@ -20,18 +21,18 @@ import { Button } from "@/shared/ui/button";
 
 const FRANJA_STYLES = {
   morning: {
-    block: "border-deep-sky-blue bg-deep-sky-blue-soft",
-    label: "text-deep-sky-blue",
+    block: "border-shift-morning bg-shift-morning-soft",
+    label: "text-shift-morning",
     text: "Mañana",
   },
   afternoon: {
-    block: "border-cool-horizon bg-cool-horizon-soft",
-    label: "text-cool-horizon",
+    block: "border-shift-afternoon bg-shift-afternoon-soft",
+    label: "text-shift-afternoon",
     text: "Tarde",
   },
   night: {
-    block: "border-fuchsia-plum bg-fuchsia-plum-soft",
-    label: "text-fuchsia-plum",
+    block: "border-shift-night bg-shift-night-soft",
+    label: "text-shift-night",
     text: "Noche",
   },
 } as const;
@@ -176,8 +177,8 @@ const INCLUIDO = [
 ] as const;
 
 const NAV = [
-  { href: "#producto", label: "Producto" },
   { href: "#como-funciona", label: "Cómo funciona" },
+  { href: "#producto", label: "Producto" },
   { href: "#equipos", label: "Equipos" },
   { href: "#precios", label: "Precios" },
 ] as const;
@@ -303,9 +304,9 @@ export default function Home() {
     <div className="flex flex-col bg-surface text-ink">
       {/* Header sobre el navy */}
       <header className="sticky top-0 z-50 bg-secondary">
-        <div className="mx-auto flex h-16 max-w-295 items-center justify-between px-6 md:px-8">
-          <div className="flex items-center gap-10">
-            <span className="text-h3 text-white">EonLab</span>
+        <div className="mx-auto flex h-16 max-w-295 items-center justify-between gap-3 px-4 sm:px-6 md:px-8">
+          <div className="flex min-w-0 items-center gap-10">
+            <Logo size="sm" className="shrink-0 text-white" />
             <nav className="hidden items-center gap-6 md:flex">
               {NAV.map(({ href, label }) => (
                 <a
@@ -318,16 +319,19 @@ export default function Home() {
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-3">
+          {/* En móvil los dos enlaces compiten con el logo por el ancho: se
+              encogen (sin padding lateral el de texto, pill más estrecha) y
+              se mantienen en una sola línea. */}
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/login"
-              className="px-3 text-button text-white/90 transition-colors hover:text-white"
+              className="whitespace-nowrap px-1 text-[13px] font-medium leading-none text-white/90 transition-colors hover:text-white sm:px-3 sm:text-button"
             >
               Iniciar sesión
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-surface px-5 py-2.5 text-button text-secondary transition-transform active:scale-[0.96]"
+              className="whitespace-nowrap rounded-full bg-primary px-3.5 py-2 text-[13px] font-medium leading-none text-primary-foreground transition-transform active:scale-[0.96] sm:px-5 sm:py-2.5 sm:text-button"
             >
               Prueba gratis
             </Link>
@@ -361,13 +365,6 @@ export default function Home() {
           </svg>
 
           <div className="relative z-10 mx-auto flex max-w-205 flex-col items-center gap-6 text-center">
-            <span className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 ring-1 ring-inset ring-white/20">
-              <span className="size-2 rounded-full bg-deep-sky-blue" />
-              <span className="text-label-caps uppercase text-white/90">
-                30 días gratis · sin tarjeta
-              </span>
-            </span>
-
             <h1 className="text-[40px] font-bold leading-[1.05] tracking-tight text-white md:text-display-lg">
               Deja de cuadrar turnos a mano.
             </h1>
@@ -381,7 +378,7 @@ export default function Home() {
             <div className="mt-2 flex flex-col items-center gap-4 sm:flex-row">
               <Link
                 href="/register"
-                className="w-full rounded-full bg-surface px-7 py-3.5 text-center text-base font-medium text-secondary transition-transform active:scale-[0.96] sm:w-auto"
+                className="w-full rounded-full bg-primary px-7 py-3.5 text-center text-base font-medium text-primary-foreground transition-transform active:scale-[0.96] sm:w-auto"
               >
                 Crear mi empresa
               </Link>
@@ -625,7 +622,7 @@ export default function Home() {
         <section id="precios" className="bg-secondary px-6 py-22 md:px-8">
           <div className="mx-auto grid max-w-295 items-center gap-10 md:grid-cols-12">
             <div className="flex flex-col gap-5 md:col-span-6">
-              <span className="text-label-caps uppercase text-deep-sky-blue">
+              <span className="text-label-caps uppercase text-eon-teal">
                 Precios
               </span>
               <h2 className="text-h1 text-white">
@@ -645,7 +642,9 @@ export default function Home() {
                   <span className="text-label-caps uppercase text-ink-muted">
                     Empieza hoy
                   </span>
-                  <span className="text-display-sm text-ink">30 días gratis</span>
+                  <span className="font-brand text-display-sm text-ink">
+                    30 días gratis
+                  </span>
                   <span className="text-body-sm text-ink-muted">
                     Después, 30 € al mes por cada 5 trabajadores.
                   </span>
@@ -677,7 +676,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-hairline bg-surface px-6 py-10 md:px-8">
         <div className="mx-auto flex max-w-295 flex-col items-center justify-between gap-4 md:flex-row">
-          <span className="text-h3 text-primary">EonLab</span>
+          <Logo tagline className="text-ink" />
           <span className="text-body-sm text-ink-muted">
             © {new Date().getFullYear()} EonLab. Todos los derechos reservados.
           </span>

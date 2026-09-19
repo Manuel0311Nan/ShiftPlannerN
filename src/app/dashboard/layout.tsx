@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Bell, LogOut, Search, Settings } from "lucide-react";
 import { auth, signOut } from "@/auth";
 import { Badge } from "@/shared/ui/badge";
+import { Logo, LogoMark } from "@/shared/ui/logo";
 import { MobileBottomNav, SidebarNav } from "./sidebar-nav";
 
 const ROL_LABEL: Record<string, string> = {
@@ -29,9 +30,9 @@ export default async function DashboardLayout({
       {/* Sidebar (desktop) */}
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-hairline bg-surface py-6 md:flex">
         <div className="mb-10 px-6">
-          <Link href="/dashboard" className="block">
-            <span className="text-h3 text-primary">EonLab</span>
-            <p className="text-label-caps uppercase text-ink-muted">
+          <Link href="/dashboard" className="block text-ink">
+            <Logo />
+            <p className="mt-1.5 text-label-caps uppercase text-ink-muted">
               Management Suite
             </p>
           </Link>
@@ -68,8 +69,8 @@ export default async function DashboardLayout({
               className="w-full bg-transparent text-body-sm outline-none placeholder:text-ink-muted"
             />
           </div>
-          <Link href="/dashboard" className="text-title-md text-primary md:hidden">
-            EonLab
+          <Link href="/dashboard" className="text-ink md:hidden">
+            <LogoMark size="sm" />
           </Link>
 
           <div className="flex items-center gap-4">

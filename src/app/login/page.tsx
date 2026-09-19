@@ -1,16 +1,14 @@
 import Link from "next/link";
 import { Card } from "@/shared/ui/card";
+import { Logo } from "@/shared/ui/logo";
 import { LoginForm } from "./login-form";
 
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-1 items-center justify-center bg-canvas-soft px-6 py-16">
       <div className="flex w-full max-w-[420px] flex-col gap-6">
-        <Link
-          href="/"
-          className="text-center text-[20px] font-semibold tracking-[-0.125px] text-ink"
-        >
-          EonLab
+        <Link href="/" className="flex justify-center text-ink">
+          <Logo />
         </Link>
 
         <Card elevated className="flex flex-col gap-6">

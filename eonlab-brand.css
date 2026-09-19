@@ -1,0 +1,72 @@
+/* ==========================================================================
+   EonLab — tokens de marca
+   --------------------------------------------------------------------------
+   Cómo aplicarlo (elige según tu setup):
+
+   1) Importa este archivo desde tu globals.css:
+        @import "./eonlab-brand.css";
+      (o pega el bloque :root dentro de tu globals.css existente).
+
+   2) Fuente: instala Sora con next/font y expón --font-brand (ver nota abajo).
+
+   3) Para tener clases de Tailwind (bg-eon-violet, text-eon-ink, font-brand)
+      usa la OPCIÓN A o B del final según tu versión de Tailwind.
+   ========================================================================== */
+
+:root {
+  /* --- Colores de marca --- */
+  --eon-ink: #1A1C34;        /* primario: texto y superficies oscuras */
+  --eon-violet: #7B6CFF;     /* acento: la "chispa" del lab, CTAs (usar con moderación) */
+  --eon-teal: #2DD4BF;       /* secundario: destacados, gráficos */
+  --eon-paper: #F4F3EF;      /* fondo claro cálido */
+  --eon-muted: #6B6E86;      /* texto secundario sobre claro */
+  --eon-muted-dark: #9A9DB8; /* texto secundario sobre oscuro */
+
+  /* --- Base de sistema --- */
+  --eon-radius: 12px;
+  --font-brand: "Sora", system-ui, sans-serif;
+}
+
+/* Modo oscuro (si usas la clase .dark de shadcn / next-themes) */
+.dark {
+  --eon-paper: #12131F;
+  --eon-muted: #9A9DB8;
+}
+
+/* ==========================================================================
+   OPCIÓN A — Tailwind v4 (config en CSS)
+   Pega esto en tu globals.css para generar las clases utilitarias:
+
+   @theme inline {
+     --color-eon-ink: var(--eon-ink);
+     --color-eon-violet: var(--eon-violet);
+     --color-eon-teal: var(--eon-teal);
+     --color-eon-paper: var(--eon-paper);
+     --font-brand: var(--font-brand);
+   }
+
+   --------------------------------------------------------------------------
+   OPCIÓN B — Tailwind v3 (tailwind.config.ts):
+
+   theme: {
+     extend: {
+       colors: {
+         "eon-ink": "#1A1C34",
+         "eon-violet": "#7B6CFF",
+         "eon-teal": "#2DD4BF",
+         "eon-paper": "#F4F3EF",
+       },
+       fontFamily: { brand: ["var(--font-brand)"] },
+       borderRadius: { brand: "var(--eon-radius)" },
+     },
+   }
+
+   --------------------------------------------------------------------------
+   NOTA — fuente con next/font (app/layout.tsx):
+
+   import { Sora } from "next/font/google";
+   const sora = Sora({ subsets: ["latin"], variable: "--font-brand" });
+   // luego: <html className={sora.variable}> ... </html>
+
+   Alternativas igual de válidas: Space Grotesk o Manrope.
+   ========================================================================== */

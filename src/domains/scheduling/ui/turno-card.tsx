@@ -15,9 +15,9 @@ import {
 } from "./board-utils";
 
 const FRANJA_STYLES: Record<Franja, { block: string; label: string }> = {
-  morning: { block: "border-deep-sky-blue bg-deep-sky-blue-soft", label: "text-deep-sky-blue" },
-  afternoon: { block: "border-cool-horizon bg-cool-horizon-soft", label: "text-cool-horizon" },
-  night: { block: "border-fuchsia-plum bg-fuchsia-plum-soft", label: "text-fuchsia-plum" },
+  morning: { block: "border-shift-morning bg-shift-morning-soft", label: "text-shift-morning" },
+  afternoon: { block: "border-shift-afternoon bg-shift-afternoon-soft", label: "text-shift-afternoon" },
+  night: { block: "border-shift-night bg-shift-night-soft", label: "text-shift-night" },
 };
 
 export function TurnoCard({
@@ -60,7 +60,7 @@ export function TurnoCard({
         {horaDe(turno.inicioIso)} — {horaDe(turno.finIso)}
       </span>
       {turno.origen === "manual" && (
-        <span className="mt-1 w-fit rounded-full bg-fuchsia-plum-soft px-1.5 text-[10px] font-semibold text-fuchsia-plum">
+        <span className="mt-1 w-fit rounded-full bg-shift-night-soft px-1.5 text-[10px] font-semibold text-shift-night">
           manual
         </span>
       )}

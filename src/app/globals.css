@@ -41,18 +41,25 @@
   --color-accent-orange-soft: var(--accent-orange-soft);
   --color-accent-green-soft: var(--accent-green-soft);
 
-  --color-deep-sky-blue: var(--deep-sky-blue);
-  --color-cool-horizon: var(--cool-horizon);
-  --color-baby-blue-ice: var(--baby-blue-ice);
-  --color-pale-sky: var(--pale-sky);
-  --color-fuchsia-plum: var(--fuchsia-plum);
-  --color-deep-sky-blue-soft: var(--deep-sky-blue-soft);
-  --color-cool-horizon-soft: var(--cool-horizon-soft);
-  --color-baby-blue-ice-soft: var(--baby-blue-ice-soft);
-  --color-pale-sky-soft: var(--pale-sky-soft);
-  --color-fuchsia-plum-soft: var(--fuchsia-plum-soft);
+  /* Colores de marca en crudo (EonLab-Identidad-y-Plan-de-Marketing.pdf).
+     Úsalos solo donde la marca se muestra como tal —logo, acentos
+     decorativos—; para UI, usa los tokens semánticos de abajo. */
+  --color-eon-ink: var(--eon-ink);
+  --color-eon-violet: var(--eon-violet);
+  --color-eon-teal: var(--eon-teal);
+  --color-eon-paper: var(--eon-paper);
+
+  /* Franjas horarias: nombradas por su función, no por su color, para que
+     un cambio de paleta no obligue a renombrar clases. */
+  --color-shift-morning: var(--shift-morning);
+  --color-shift-afternoon: var(--shift-afternoon);
+  --color-shift-night: var(--shift-night);
+  --color-shift-morning-soft: var(--shift-morning-soft);
+  --color-shift-afternoon-soft: var(--shift-afternoon-soft);
+  --color-shift-night-soft: var(--shift-night-soft);
 
   --font-sans: var(--font-inter);
+  --font-brand: var(--font-sora);
 
   /* Escala tipográfica editorial "Paper Metric" (design system de Stitch).
      Genera utilidades text-display-lg, text-h1, text-label-caps, ... con su
@@ -123,16 +130,29 @@
 }
 
 :root {
+  /* --- Paleta de marca EonLab (valores literales del manual) --- */
+  --eon-ink: #1a1c34; /* texto y superficies oscuras */
+  --eon-violet: #7b6cff; /* acento / "chispa" del lab */
+  --eon-teal: #2dd4bf; /* secundario: destacados y gráficos */
+  --eon-paper: #f4f3ef; /* fondo claro cálido */
+
+  /* Variantes de trabajo: el violet y el teal de marca no llegan a 4.5:1
+     sobre blanco, así que lo interactivo y el texto usan estas versiones
+     oscurecidas y el color puro queda para fondos, bordes y decoración. */
+  --eon-violet-strong: #5b4be8;
+  --eon-violet-deep: #4636c9;
+  --eon-teal-deep: #0f766e;
+
   --canvas: #ffffff;
-  --canvas-soft: #f6f5f4;
+  --canvas-soft: var(--eon-paper);
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --ink: #000000;
-  --ink-secondary: #31302e;
-  --ink-muted: #615d59;
-  --ink-faint: #a39e98;
-  --hairline: #e6e6e6;
-  --overlay: rgba(0, 0, 0, 0.4);
+  --ink: var(--eon-ink);
+  --ink-secondary: #3b3e57;
+  --ink-muted: #6b6e86; /* "muted" del manual */
+  --ink-faint: #9a9db8; /* "muted-dark" del manual, reusado como faint */
+  --hairline: #e3e1dc;
+  --overlay: rgba(26, 28, 52, 0.45);
 
   --accent-orange: #dd5b00;
   --accent-orange-deep: #793400;
@@ -141,18 +161,15 @@
   --accent-orange-soft: color-mix(in srgb, var(--accent-orange) 12%, transparent);
   --accent-green-soft: color-mix(in srgb, var(--accent-green) 12%, transparent);
 
-  /* Paleta de marca (docs/PLAN-mejoras-horarios.md) */
-  --deep-sky-blue: #2ec0f9;
-  --cool-horizon: #67aaf9;
-  --baby-blue-ice: #9bbdf9;
-  --pale-sky: #c4e0f9;
-  --fuchsia-plum: #b95f89;
+  /* Franjas horarias derivadas de la paleta: teal (mañana), violeta
+     (tarde), ink (noche). Ordenadas de más claro a más oscuro. */
+  --shift-morning: var(--eon-teal-deep);
+  --shift-afternoon: var(--eon-violet-strong);
+  --shift-night: #3a3f6e;
 
-  --deep-sky-blue-soft: color-mix(in srgb, var(--deep-sky-blue) 12%, transparent);
-  --cool-horizon-soft: color-mix(in srgb, var(--cool-horizon) 12%, transparent);
-  --baby-blue-ice-soft: color-mix(in srgb, var(--baby-blue-ice) 12%, transparent);
-  --pale-sky-soft: color-mix(in srgb, var(--pale-sky) 12%, transparent);
-  --fuchsia-plum-soft: color-mix(in srgb, var(--fuchsia-plum) 12%, transparent);
+  --shift-morning-soft: color-mix(in srgb, var(--eon-teal) 16%, transparent);
+  --shift-afternoon-soft: color-mix(in srgb, var(--eon-violet) 14%, transparent);
+  --shift-night-soft: color-mix(in srgb, var(--shift-night) 10%, transparent);
 
   --background: var(--canvas-soft);
   --foreground: var(--ink);
@@ -160,10 +177,10 @@
   --card-foreground: var(--ink);
   --popover: var(--surface);
   --popover-foreground: var(--ink);
-  --primary: #0075de;
-  --primary-active: #005bab;
+  --primary: var(--eon-violet-strong);
+  --primary-active: var(--eon-violet-deep);
   --primary-foreground: #ffffff;
-  --secondary: #213183;
+  --secondary: var(--eon-ink);
   --secondary-foreground: #ffffff;
   --muted: var(--canvas-soft);
   --muted-foreground: var(--ink-muted);
@@ -176,16 +193,30 @@
 }
 
 .dark {
-  --canvas: #111113;
-  --canvas-soft: #18181b;
-  --surface: #1c1c1f;
-  --surface-raised: #232326;
-  --ink: #f5f5f4;
-  --ink-secondary: #d4d4d2;
-  --ink-muted: #9c9a97;
-  --ink-faint: #5f5d5b;
-  --hairline: #2d2d31;
-  --overlay: rgba(0, 0, 0, 0.6);
+  /* En oscuro el fondo es el ink de marca profundizado (#12131F del
+     manual); violet y teal suben de luminosidad para seguir legibles. */
+  --canvas: #0e0f1a;
+  --canvas-soft: #12131f;
+  --surface: #191b2c;
+  --surface-raised: #212338;
+  --ink: #f4f3ef;
+  --ink-secondary: #d3d4e0;
+  --ink-muted: #9a9db8;
+  --ink-faint: #666a8a;
+  --hairline: #2a2d45;
+  --overlay: rgba(6, 7, 14, 0.65);
+
+  --eon-violet-strong: #9c90ff;
+  --eon-violet-deep: #b3aaff;
+  --eon-teal-deep: #5ee3d1;
+
+  --shift-morning: #5ee3d1;
+  --shift-afternoon: #9c90ff;
+  --shift-night: #8f96d6;
+
+  --shift-morning-soft: color-mix(in srgb, var(--shift-morning) 18%, transparent);
+  --shift-afternoon-soft: color-mix(in srgb, var(--shift-afternoon) 18%, transparent);
+  --shift-night-soft: color-mix(in srgb, var(--shift-night) 16%, transparent);
 
   --background: var(--canvas-soft);
   --foreground: var(--ink);
@@ -193,11 +224,11 @@
   --card-foreground: var(--ink);
   --popover: var(--surface);
   --popover-foreground: var(--ink);
-  --primary: #3b9dff;
-  --primary-active: #63b1ff;
-  --primary-foreground: #0a0a0a;
-  --secondary: #4a5fd6;
-  --secondary-foreground: #ffffff;
+  --primary: var(--eon-violet-strong);
+  --primary-active: var(--eon-violet-deep);
+  --primary-foreground: #12131f;
+  --secondary: #2a2d4a;
+  --secondary-foreground: #f4f3ef;
   --muted: var(--canvas-soft);
   --muted-foreground: var(--ink-muted);
   --accent: var(--surface-raised);
@@ -215,5 +246,14 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Sora en los titulares (manual de marca); Inter sigue siendo la fuente
+     de lectura. Donde el titular no es un <h1..h3> se aplica `font-brand`
+     a mano. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-brand);
   }
 }
