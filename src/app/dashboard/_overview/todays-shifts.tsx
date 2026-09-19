@@ -5,9 +5,9 @@ import { Card } from "@/shared/ui/card";
 import type { BloqueHoy, Franja } from "@/domains/scheduling/domain/resumen-dashboard";
 
 const FRANJA_STYLES: Record<Franja, string> = {
-  MANANA: "border-deep-sky-blue bg-deep-sky-blue/5",
-  TARDE: "border-cool-horizon bg-cool-horizon/5",
-  NOCHE: "border-fuchsia-plum bg-fuchsia-plum/5",
+  MANANA: "border-shift-morning bg-shift-morning/5",
+  TARDE: "border-shift-afternoon bg-shift-afternoon/5",
+  NOCHE: "border-shift-night bg-shift-night/5",
 };
 
 const FRANJA_LABEL: Record<Franja, string> = {

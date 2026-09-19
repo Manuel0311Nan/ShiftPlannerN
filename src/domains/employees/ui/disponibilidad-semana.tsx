@@ -22,18 +22,18 @@ type Franja = "morning" | "afternoon" | "night";
 const FRANJA_STYLES: Record<Franja, { block: string; text: string; label: string }> =
   {
     morning: {
-      block: "border-deep-sky-blue bg-deep-sky-blue/10",
-      text: "text-deep-sky-blue",
+      block: "border-shift-morning bg-shift-morning/10",
+      text: "text-shift-morning",
       label: "Mañana",
     },
     afternoon: {
-      block: "border-cool-horizon bg-cool-horizon/10",
-      text: "text-cool-horizon",
+      block: "border-shift-afternoon bg-shift-afternoon/10",
+      text: "text-shift-afternoon",
       label: "Tarde",
     },
     night: {
-      block: "border-fuchsia-plum bg-fuchsia-plum/10",
-      text: "text-fuchsia-plum",
+      block: "border-shift-night bg-shift-night/10",
+      text: "text-shift-night",
       label: "Noche",
     },
   };
